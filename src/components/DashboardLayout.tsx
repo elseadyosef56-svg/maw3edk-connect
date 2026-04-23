@@ -20,10 +20,16 @@ export const DashboardLayout = () => {
   const { user, signOut } = useAuth();
   const { business, loading } = useBusiness();
   const navigate = useNavigate();
+  const location = useLocation();
   const [open, setOpen] = useState(false);
+
+  useEffect(() => { setOpen(false); }, [location.pathname]);
 
   if (loading) {
     return <div className="min-h-screen grid place-items-center"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
+  }
+  if (business && !business.onboarded) {
+    return <Navigate to="/onboarding" replace />;
   }
 
   const handleSignOut = async () => { await signOut(); navigate("/", { replace: true }); };
