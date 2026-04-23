@@ -14,6 +14,79 @@ export type Database = {
   }
   public: {
     Tables: {
+      bookings: {
+        Row: {
+          business_id: string
+          created_at: string
+          customer_name: string
+          customer_notes: string | null
+          customer_phone: string
+          employee_id: string
+          end_time: string
+          id: string
+          price_snapshot: number | null
+          qr_token: string
+          service_id: string
+          start_time: string
+          status: Database["public"]["Enums"]["booking_status"]
+          updated_at: string
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          customer_name: string
+          customer_notes?: string | null
+          customer_phone: string
+          employee_id: string
+          end_time: string
+          id?: string
+          price_snapshot?: number | null
+          qr_token?: string
+          service_id: string
+          start_time: string
+          status?: Database["public"]["Enums"]["booking_status"]
+          updated_at?: string
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          customer_name?: string
+          customer_notes?: string | null
+          customer_phone?: string
+          employee_id?: string
+          end_time?: string
+          id?: string
+          price_snapshot?: number | null
+          qr_token?: string
+          service_id?: string
+          start_time?: string
+          status?: Database["public"]["Enums"]["booking_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bookings_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       businesses: {
         Row: {
           category: string | null
@@ -65,6 +138,97 @@ export type Database = {
         }
         Relationships: []
       }
+      employees: {
+        Row: {
+          business_id: string
+          created_at: string
+          id: string
+          image_url: string | null
+          is_active: boolean
+          name: string
+          phone: string | null
+          service_ids: string[] | null
+          updated_at: string
+          working_hours: Json | null
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          name: string
+          phone?: string | null
+          service_ids?: string[] | null
+          updated_at?: string
+          working_hours?: Json | null
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          name?: string
+          phone?: string | null
+          service_ids?: string[] | null
+          updated_at?: string
+          working_hours?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employees_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payment_requests: {
+        Row: {
+          amount: number
+          approved_at: string | null
+          business_id: string
+          created_at: string
+          id: string
+          method: Database["public"]["Enums"]["payment_method"]
+          plan: Database["public"]["Enums"]["subscription_plan"]
+          reference: string | null
+          status: Database["public"]["Enums"]["payment_status"]
+        }
+        Insert: {
+          amount: number
+          approved_at?: string | null
+          business_id: string
+          created_at?: string
+          id?: string
+          method: Database["public"]["Enums"]["payment_method"]
+          plan: Database["public"]["Enums"]["subscription_plan"]
+          reference?: string | null
+          status?: Database["public"]["Enums"]["payment_status"]
+        }
+        Update: {
+          amount?: number
+          approved_at?: string | null
+          business_id?: string
+          created_at?: string
+          id?: string
+          method?: Database["public"]["Enums"]["payment_method"]
+          plan?: Database["public"]["Enums"]["subscription_plan"]
+          reference?: string | null
+          status?: Database["public"]["Enums"]["payment_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_requests_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           business_id: string | null
@@ -96,6 +260,53 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "profiles_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      services: {
+        Row: {
+          business_id: string
+          created_at: string
+          description: string | null
+          duration_minutes: number
+          id: string
+          image_url: string | null
+          is_active: boolean
+          name: string
+          price: number
+          updated_at: string
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          description?: string | null
+          duration_minutes?: number
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          name: string
+          price?: number
+          updated_at?: string
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          description?: string | null
+          duration_minutes?: number
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          name?: string
+          price?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "services_business_id_fkey"
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "businesses"
@@ -189,7 +400,16 @@ export type Database = {
     }
     Enums: {
       app_role: "owner" | "staff" | "admin"
+      booking_status:
+        | "pending"
+        | "confirmed"
+        | "arrived"
+        | "completed"
+        | "cancelled"
+        | "no_show"
       business_status: "trial" | "active" | "expired" | "suspended"
+      payment_method: "cash" | "bank_transfer"
+      payment_status: "pending" | "approved" | "rejected"
       subscription_plan: "basic" | "pro" | "premium"
       subscription_status: "trial" | "active" | "expired" | "pending"
     }
@@ -320,7 +540,17 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["owner", "staff", "admin"],
+      booking_status: [
+        "pending",
+        "confirmed",
+        "arrived",
+        "completed",
+        "cancelled",
+        "no_show",
+      ],
       business_status: ["trial", "active", "expired", "suspended"],
+      payment_method: ["cash", "bank_transfer"],
+      payment_status: ["pending", "approved", "rejected"],
       subscription_plan: ["basic", "pro", "premium"],
       subscription_status: ["trial", "active", "expired", "pending"],
     },
