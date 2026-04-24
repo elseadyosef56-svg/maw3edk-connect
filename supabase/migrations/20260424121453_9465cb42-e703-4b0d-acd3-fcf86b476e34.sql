@@ -1,0 +1,6 @@
+
+ALTER TABLE public.businesses
+  ADD COLUMN IF NOT EXISTS whatsapp_number TEXT,
+  ADD COLUMN IF NOT EXISTS address TEXT,
+  ADD COLUMN IF NOT EXISTS description TEXT,
+  ADD COLUMN IF NOT EXISTS instagram TEXT;
