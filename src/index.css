@@ -14,19 +14,21 @@
     --popover: 0 0% 100%;
     --popover-foreground: 224 40% 12%;
 
-    /* Brand: deep teal-emerald */
-    --primary: 168 76% 36%;
+    /* Brand: royal emerald + champagne gold */
+    --primary: 165 84% 32%;
     --primary-foreground: 0 0% 100%;
-    --primary-glow: 168 80% 55%;
+    --primary-glow: 168 90% 55%;
+    --primary-deep: 168 84% 22%;
 
-    --secondary: 220 20% 95%;
-    --secondary-foreground: 224 40% 12%;
+    --secondary: 220 25% 96%;
+    --secondary-foreground: 224 45% 10%;
 
-    --muted: 220 20% 95%;
-    --muted-foreground: 220 12% 45%;
+    --muted: 220 22% 95%;
+    --muted-foreground: 220 14% 42%;
 
-    --accent: 38 92% 55%;
-    --accent-foreground: 224 40% 12%;
+    --accent: 42 95% 58%;
+    --accent-foreground: 224 45% 10%;
+    --accent-glow: 42 100% 70%;
 
     --destructive: 0 75% 55%;
     --destructive-foreground: 0 0% 100%;
