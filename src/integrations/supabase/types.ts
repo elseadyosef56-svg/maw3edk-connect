@@ -89,10 +89,13 @@ export type Database = {
       }
       businesses: {
         Row: {
+          address: string | null
           category: string | null
           cover_url: string | null
           created_at: string
+          description: string | null
           id: string
+          instagram: string | null
           logo_url: string | null
           name: string
           onboarded: boolean
@@ -102,13 +105,17 @@ export type Database = {
           status: Database["public"]["Enums"]["business_status"]
           trial_end_date: string
           updated_at: string
+          whatsapp_number: string | null
           working_hours: Json | null
         }
         Insert: {
+          address?: string | null
           category?: string | null
           cover_url?: string | null
           created_at?: string
+          description?: string | null
           id?: string
+          instagram?: string | null
           logo_url?: string | null
           name: string
           onboarded?: boolean
@@ -118,13 +125,17 @@ export type Database = {
           status?: Database["public"]["Enums"]["business_status"]
           trial_end_date?: string
           updated_at?: string
+          whatsapp_number?: string | null
           working_hours?: Json | null
         }
         Update: {
+          address?: string | null
           category?: string | null
           cover_url?: string | null
           created_at?: string
+          description?: string | null
           id?: string
+          instagram?: string | null
           logo_url?: string | null
           name?: string
           onboarded?: boolean
@@ -134,6 +145,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["business_status"]
           trial_end_date?: string
           updated_at?: string
+          whatsapp_number?: string | null
           working_hours?: Json | null
         }
         Relationships: []
