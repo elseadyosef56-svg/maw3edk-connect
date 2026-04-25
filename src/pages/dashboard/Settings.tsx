@@ -139,9 +139,23 @@ const SettingsPage = () => {
           </div>
         </div>
         <div className="grid sm:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label className="flex items-center gap-1.5"><MessageCircle className="w-3.5 h-3.5 text-primary" /> واتساب الحجوزات *</Label>
-            <Input type="tel" value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} dir="ltr" placeholder="0911234567" className="h-11" />
+          <div className="space-y-2 sm:col-span-2 p-4 rounded-2xl bg-gradient-to-br from-emerald-500/5 to-emerald-500/10 border-2 border-emerald-500/20">
+            <Label className="flex items-center gap-2 text-base font-bold">
+              <MessageCircle className="w-5 h-5 text-emerald-600" />
+              رقم واتساب لاستقبال الحجوزات *
+            </Label>
+            <Input
+              type="tel"
+              value={whatsapp}
+              onChange={(e) => setWhatsapp(e.target.value)}
+              dir="ltr"
+              placeholder="0911234567"
+              className="h-12 text-base font-medium bg-background"
+            />
+            <p className="text-xs text-emerald-700 dark:text-emerald-400 leading-relaxed">
+              ✅ كل حجز جديد سيُرسل تلقائياً إلى هذا الرقم عبر واتساب فور إتمام الحجز من العميل.
+              <br />استخدم رقمك الليبي بدون مفتاح الدولة (مثال: 0911234567).
+            </p>
           </div>
           <div className="space-y-2">
             <Label className="flex items-center gap-1.5"><Phone className="w-3.5 h-3.5 text-primary" /> الهاتف العام</Label>
