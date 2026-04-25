@@ -97,7 +97,7 @@ export const DashboardLayout = () => {
       )}
 
       <main className="flex-1 min-w-0 pt-14 lg:pt-0">
-        <div className="container max-w-6xl py-6 lg:py-8">
+        <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 py-6 lg:py-8">
           <Outlet />
         </div>
       </main>
