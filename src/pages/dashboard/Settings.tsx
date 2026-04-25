@@ -57,10 +57,11 @@ const SettingsPage = () => {
 
   const save = async () => {
     if (!business) return;
+    if (!name.trim()) { toast.error("اسم المنشأة مطلوب"); return; }
     setSaving(true);
     const { error } = await supabase.from("businesses").update({
       name: name.trim(),
-      category,
+      category: category || null,
       phone: phone.trim() || null,
       whatsapp_number: whatsapp.trim() || null,
       address: address.trim() || null,
@@ -71,9 +72,9 @@ const SettingsPage = () => {
       working_hours: hours as any,
     }).eq("id", business.id);
     setSaving(false);
-    if (error) { toast.error(error.message); return; }
-    toast.success("تم الحفظ ✨");
-    refresh();
+    if (error) { toast.error("فشل الحفظ: " + error.message); return; }
+    toast.success("✨ تم حفظ كل الإعدادات بنجاح");
+    await refresh();
   };
 
   const publicUrl = `${window.location.origin}/${business?.slug || ""}`;
