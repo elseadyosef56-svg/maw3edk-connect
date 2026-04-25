@@ -202,6 +202,54 @@
     background-size: 200% 100%;
     animation: shimmer 2.5s linear infinite;
   }
+  /* Premium booking page hero */
+  .booking-hero {
+    background: linear-gradient(135deg, hsl(168 84% 28% / 0.95) 0%, hsl(165 76% 38% / 0.92) 50%, hsl(180 70% 48% / 0.88) 100%);
+    position: relative;
+    overflow: hidden;
+  }
+  .booking-hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 20% 30%, hsl(42 95% 70% / 0.25), transparent 50%),
+                radial-gradient(circle at 80% 70%, hsl(168 90% 80% / 0.2), transparent 50%);
+    pointer-events: none;
+  }
+  /* Premium card grid for service selection */
+  .service-card {
+    @apply rounded-2xl p-4 sm:p-5 transition-all duration-300 cursor-pointer;
+    background: linear-gradient(135deg, hsl(0 0% 100% / 0.95), hsl(168 60% 97% / 0.85));
+    border: 1px solid hsl(var(--border));
+    box-shadow: var(--shadow-soft);
+  }
+  .service-card:hover {
+    transform: translateY(-3px) scale(1.01);
+    border-color: hsl(var(--primary) / 0.4);
+    box-shadow: var(--shadow-glow);
+  }
+  .service-card.selected {
+    border-color: hsl(var(--primary));
+    background: linear-gradient(135deg, hsl(168 84% 96%), hsl(42 95% 96%));
+    box-shadow: var(--shadow-glow);
+  }
+  /* Time slot button */
+  .slot-btn {
+    @apply rounded-xl py-3 px-2 text-sm font-bold transition-all border-2;
+    border-color: hsl(var(--border));
+    background: hsl(var(--card));
+  }
+  .slot-btn:hover:not(:disabled) {
+    border-color: hsl(var(--primary));
+    background: hsl(var(--primary) / 0.08);
+    transform: scale(1.04);
+  }
+  .slot-btn.selected {
+    background: var(--gradient-primary);
+    color: hsl(var(--primary-foreground));
+    border-color: hsl(var(--primary));
+    box-shadow: var(--shadow-glow);
+  }
 }
 
 @keyframes float {
@@ -212,3 +260,8 @@
   0% { background-position: -200% 0; }
   100% { background-position: 200% 0; }
 }
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-slide-up { animation: slide-up 0.5s var(--transition-smooth); }
