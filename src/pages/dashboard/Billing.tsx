@@ -255,15 +255,66 @@ const Billing = () => {
               </RadioGroup>
             </div>
 
-            {(method === "card" || method === "adfali") && (
-              <div className="p-4 rounded-2xl bg-accent/10 border border-accent/30 text-sm">
-                <p className="font-bold mb-1 flex items-center gap-2">
-                  <ShieldCheck className="w-4 h-4 text-accent-foreground" />
-                  {method === "card" ? "الدفع بالبطاقة" : "أدفع لي"}
+            {method === "card" && (
+              <div className="space-y-3 animate-fade-in">
+                {/* Premium card preview */}
+                <div className="relative rounded-2xl p-5 bg-gradient-to-br from-slate-900 via-emerald-900 to-slate-800 text-white shadow-deep overflow-hidden h-44">
+                  <div className="absolute -top-10 -left-10 w-40 h-40 bg-amber-400/30 rounded-full blur-3xl" />
+                  <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-primary/30 rounded-full blur-3xl" />
+                  <div className="relative h-full flex flex-col justify-between">
+                    <div className="flex items-start justify-between">
+                      <div className="w-10 h-7 rounded bg-gradient-to-br from-amber-300 to-amber-600 shadow" />
+                      <span className="text-xs font-bold tracking-widest opacity-80">VISA / MC</span>
+                    </div>
+                    <p className="text-lg sm:text-xl font-mono tracking-[0.2em]" dir="ltr">
+                      {(cardNumber || "•••• •••• •••• ••••").padEnd(19, " ")}
+                    </p>
+                    <div className="flex items-end justify-between text-xs">
+                      <div>
+                        <p className="opacity-60 text-[10px] uppercase tracking-wider">حامل البطاقة</p>
+                        <p className="font-bold uppercase truncate max-w-[160px]">{cardName || "اسم حامل البطاقة"}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="opacity-60 text-[10px] uppercase tracking-wider">انتهاء</p>
+                        <p className="font-bold" dir="ltr">{cardExpiry || "MM/YY"}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>رقم البطاقة</Label>
+                  <Input value={cardNumber} onChange={(e) => setCardNumber(formatCardNumber(e.target.value))}
+                    placeholder="1234 5678 9012 3456" dir="ltr" inputMode="numeric" className="h-11 font-mono" />
+                </div>
+                <div className="space-y-2">
+                  <Label>اسم حامل البطاقة</Label>
+                  <Input value={cardName} onChange={(e) => setCardName(e.target.value.toUpperCase())} placeholder="AHMED ALI" dir="ltr" className="h-11" />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-2">
+                    <Label>تاريخ الانتهاء</Label>
+                    <Input value={cardExpiry} onChange={(e) => setCardExpiry(formatExpiry(e.target.value))}
+                      placeholder="MM/YY" dir="ltr" inputMode="numeric" className="h-11 font-mono" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>CVC</Label>
+                    <Input value={cardCvc} onChange={(e) => setCardCvc(e.target.value.replace(/\D/g, "").slice(0, 4))}
+                      placeholder="123" dir="ltr" inputMode="numeric" type="password" className="h-11 font-mono" />
+                  </div>
+                </div>
+                <p className="text-[11px] text-muted-foreground flex items-center gap-1.5">
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                  بياناتك مشفّرة. سيتم التحقق يدوياً قبل تفعيل الاشتراك.
                 </p>
-                <p className="text-muted-foreground text-xs leading-relaxed">
-                  بعد إرسال الطلب سنتواصل معك خلال ساعات لإتمام الدفع بأمان عبر بوابة الدفع المعتمدة.
+              </div>
+            )}
+
+            {method === "adfali" && (
+              <div className="p-4 rounded-2xl bg-accent/10 border border-accent/30 text-sm space-y-2">
+                <p className="font-bold flex items-center gap-2">
+                  <Smartphone className="w-4 h-4 text-accent-foreground" /> أدفع لي
                 </p>
+                <p className="text-muted-foreground text-xs">حوّل المبلغ عبر تطبيق أدفع لي وأرسل رقم العملية للتأكيد.</p>
               </div>
             )}
 
@@ -274,7 +325,7 @@ const Billing = () => {
               </div>
             )}
 
-            {(method === "bank_transfer" || method === "card" || method === "adfali") && (
+            {(method === "bank_transfer" || method === "adfali") && (
               <div className="space-y-2">
                 <Label>رقم العملية / المرجع (اختياري)</Label>
                 <Input value={reference} onChange={(e) => setReference(e.target.value)} dir="ltr" placeholder="مثال: TXN-12345" />
