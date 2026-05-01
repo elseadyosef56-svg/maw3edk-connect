@@ -43,6 +43,18 @@ const Billing = () => {
   const [submitting, setSubmitting] = useState(false);
   const [requests, setRequests] = useState<any[]>([]);
 
+  // Card form (visual / for collecting reference; processed manually until Stripe live)
+  const [cardNumber, setCardNumber] = useState("");
+  const [cardName, setCardName] = useState("");
+  const [cardExpiry, setCardExpiry] = useState("");
+  const [cardCvc, setCardCvc] = useState("");
+
+  const formatCardNumber = (v: string) => v.replace(/\D/g, "").slice(0, 16).replace(/(.{4})/g, "$1 ").trim();
+  const formatExpiry = (v: string) => {
+    const c = v.replace(/\D/g, "").slice(0, 4);
+    return c.length >= 3 ? `${c.slice(0,2)}/${c.slice(2)}` : c;
+  };
+
   const load = async () => {
     if (!business) return;
     const { data } = await supabase.from("payment_requests").select("*").eq("business_id", business.id).order("created_at", { ascending: false });
@@ -52,20 +64,28 @@ const Billing = () => {
 
   const submit = async () => {
     if (!business) return;
+    if (method === "card") {
+      const digits = cardNumber.replace(/\s/g, "");
+      if (digits.length < 13) { toast.error("رقم البطاقة غير صحيح"); return; }
+      if (!cardName.trim()) { toast.error("اسم حامل البطاقة مطلوب"); return; }
+      if (cardExpiry.length < 5) { toast.error("تاريخ الانتهاء غير صحيح"); return; }
+      if (cardCvc.length < 3) { toast.error("رمز CVC غير صحيح"); return; }
+    }
     setSubmitting(true);
     const amount = plans.find(p => p.id === plan)!.price;
-    // map new methods to enum (DB only has cash/bank_transfer); store actual method in reference
     const dbMethod: "cash" | "bank_transfer" = method === "cash" ? "cash" : "bank_transfer";
-    const refText = method === "card" ? `[VISA/MC] ${reference || "—"}` :
-                    method === "adfali" ? `[ADFALI] ${reference || "—"}` :
-                    reference.trim() || null;
+    const last4 = cardNumber.replace(/\s/g, "").slice(-4);
+    const refText =
+      method === "card" ? `[VISA/MC ****${last4}] ${cardName}`.trim() :
+      method === "adfali" ? `[ADFALI] ${reference || "—"}` :
+      reference.trim() || null;
     const { error } = await supabase.from("payment_requests").insert({
       business_id: business.id, plan, method: dbMethod, amount, reference: refText,
     });
     setSubmitting(false);
     if (error) { toast.error(error.message); return; }
     toast.success("تم إرسال طلب التجديد. سنتواصل معك قريباً لإتمام الدفع.");
-    setOpen(false); setReference(""); load();
+    setOpen(false); setReference(""); setCardNumber(""); setCardName(""); setCardExpiry(""); setCardCvc(""); load();
   };
 
   const daysLeft = business ? Math.max(0, Math.ceil((new Date(business.trial_end_date).getTime() - Date.now()) / 86400000)) : 0;
