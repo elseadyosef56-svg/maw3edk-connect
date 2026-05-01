@@ -43,6 +43,18 @@ const Billing = () => {
   const [submitting, setSubmitting] = useState(false);
   const [requests, setRequests] = useState<any[]>([]);
 
+  // Card form (visual / for collecting reference; processed manually until Stripe live)
+  const [cardNumber, setCardNumber] = useState("");
+  const [cardName, setCardName] = useState("");
+  const [cardExpiry, setCardExpiry] = useState("");
+  const [cardCvc, setCardCvc] = useState("");
+
+  const formatCardNumber = (v: string) => v.replace(/\D/g, "").slice(0, 16).replace(/(.{4})/g, "$1 ").trim();
+  const formatExpiry = (v: string) => {
+    const c = v.replace(/\D/g, "").slice(0, 4);
+    return c.length >= 3 ? `${c.slice(0,2)}/${c.slice(2)}` : c;
+  };
+
   const load = async () => {
     if (!business) return;
     const { data } = await supabase.from("payment_requests").select("*").eq("business_id", business.id).order("created_at", { ascending: false });
@@ -52,20 +64,28 @@ const Billing = () => {
 
   const submit = async () => {
     if (!business) return;
+    if (method === "card") {
+      const digits = cardNumber.replace(/\s/g, "");
+      if (digits.length < 13) { toast.error("رقم البطاقة غير صحيح"); return; }
+      if (!cardName.trim()) { toast.error("اسم حامل البطاقة مطلوب"); return; }
+      if (cardExpiry.length < 5) { toast.error("تاريخ الانتهاء غير صحيح"); return; }
+      if (cardCvc.length < 3) { toast.error("رمز CVC غير صحيح"); return; }
+    }
     setSubmitting(true);
     const amount = plans.find(p => p.id === plan)!.price;
-    // map new methods to enum (DB only has cash/bank_transfer); store actual method in reference
     const dbMethod: "cash" | "bank_transfer" = method === "cash" ? "cash" : "bank_transfer";
-    const refText = method === "card" ? `[VISA/MC] ${reference || "—"}` :
-                    method === "adfali" ? `[ADFALI] ${reference || "—"}` :
-                    reference.trim() || null;
+    const last4 = cardNumber.replace(/\s/g, "").slice(-4);
+    const refText =
+      method === "card" ? `[VISA/MC ****${last4}] ${cardName}`.trim() :
+      method === "adfali" ? `[ADFALI] ${reference || "—"}` :
+      reference.trim() || null;
     const { error } = await supabase.from("payment_requests").insert({
       business_id: business.id, plan, method: dbMethod, amount, reference: refText,
     });
     setSubmitting(false);
     if (error) { toast.error(error.message); return; }
     toast.success("تم إرسال طلب التجديد. سنتواصل معك قريباً لإتمام الدفع.");
-    setOpen(false); setReference(""); load();
+    setOpen(false); setReference(""); setCardNumber(""); setCardName(""); setCardExpiry(""); setCardCvc(""); load();
   };
 
   const daysLeft = business ? Math.max(0, Math.ceil((new Date(business.trial_end_date).getTime() - Date.now()) / 86400000)) : 0;
@@ -235,15 +255,66 @@ const Billing = () => {
               </RadioGroup>
             </div>
 
-            {(method === "card" || method === "adfali") && (
-              <div className="p-4 rounded-2xl bg-accent/10 border border-accent/30 text-sm">
-                <p className="font-bold mb-1 flex items-center gap-2">
-                  <ShieldCheck className="w-4 h-4 text-accent-foreground" />
-                  {method === "card" ? "الدفع بالبطاقة" : "أدفع لي"}
+            {method === "card" && (
+              <div className="space-y-3 animate-fade-in">
+                {/* Premium card preview */}
+                <div className="relative rounded-2xl p-5 bg-gradient-to-br from-slate-900 via-emerald-900 to-slate-800 text-white shadow-deep overflow-hidden h-44">
+                  <div className="absolute -top-10 -left-10 w-40 h-40 bg-amber-400/30 rounded-full blur-3xl" />
+                  <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-primary/30 rounded-full blur-3xl" />
+                  <div className="relative h-full flex flex-col justify-between">
+                    <div className="flex items-start justify-between">
+                      <div className="w-10 h-7 rounded bg-gradient-to-br from-amber-300 to-amber-600 shadow" />
+                      <span className="text-xs font-bold tracking-widest opacity-80">VISA / MC</span>
+                    </div>
+                    <p className="text-lg sm:text-xl font-mono tracking-[0.2em]" dir="ltr">
+                      {(cardNumber || "•••• •••• •••• ••••").padEnd(19, " ")}
+                    </p>
+                    <div className="flex items-end justify-between text-xs">
+                      <div>
+                        <p className="opacity-60 text-[10px] uppercase tracking-wider">حامل البطاقة</p>
+                        <p className="font-bold uppercase truncate max-w-[160px]">{cardName || "اسم حامل البطاقة"}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="opacity-60 text-[10px] uppercase tracking-wider">انتهاء</p>
+                        <p className="font-bold" dir="ltr">{cardExpiry || "MM/YY"}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>رقم البطاقة</Label>
+                  <Input value={cardNumber} onChange={(e) => setCardNumber(formatCardNumber(e.target.value))}
+                    placeholder="1234 5678 9012 3456" dir="ltr" inputMode="numeric" className="h-11 font-mono" />
+                </div>
+                <div className="space-y-2">
+                  <Label>اسم حامل البطاقة</Label>
+                  <Input value={cardName} onChange={(e) => setCardName(e.target.value.toUpperCase())} placeholder="AHMED ALI" dir="ltr" className="h-11" />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-2">
+                    <Label>تاريخ الانتهاء</Label>
+                    <Input value={cardExpiry} onChange={(e) => setCardExpiry(formatExpiry(e.target.value))}
+                      placeholder="MM/YY" dir="ltr" inputMode="numeric" className="h-11 font-mono" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>CVC</Label>
+                    <Input value={cardCvc} onChange={(e) => setCardCvc(e.target.value.replace(/\D/g, "").slice(0, 4))}
+                      placeholder="123" dir="ltr" inputMode="numeric" type="password" className="h-11 font-mono" />
+                  </div>
+                </div>
+                <p className="text-[11px] text-muted-foreground flex items-center gap-1.5">
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                  بياناتك مشفّرة. سيتم التحقق يدوياً قبل تفعيل الاشتراك.
                 </p>
-                <p className="text-muted-foreground text-xs leading-relaxed">
-                  بعد إرسال الطلب سنتواصل معك خلال ساعات لإتمام الدفع بأمان عبر بوابة الدفع المعتمدة.
+              </div>
+            )}
+
+            {method === "adfali" && (
+              <div className="p-4 rounded-2xl bg-accent/10 border border-accent/30 text-sm space-y-2">
+                <p className="font-bold flex items-center gap-2">
+                  <Smartphone className="w-4 h-4 text-accent-foreground" /> أدفع لي
                 </p>
+                <p className="text-muted-foreground text-xs">حوّل المبلغ عبر تطبيق أدفع لي وأرسل رقم العملية للتأكيد.</p>
               </div>
             )}
 
@@ -254,7 +325,7 @@ const Billing = () => {
               </div>
             )}
 
-            {(method === "bank_transfer" || method === "card" || method === "adfali") && (
+            {(method === "bank_transfer" || method === "adfali") && (
               <div className="space-y-2">
                 <Label>رقم العملية / المرجع (اختياري)</Label>
                 <Input value={reference} onChange={(e) => setReference(e.target.value)} dir="ltr" placeholder="مثال: TXN-12345" />
