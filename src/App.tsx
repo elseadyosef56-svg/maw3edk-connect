@@ -18,6 +18,8 @@ import SettingsPage from "./pages/dashboard/Settings";
 import Billing from "./pages/dashboard/Billing";
 import PublicBooking from "./pages/PublicBooking";
 import CheckIn from "./pages/CheckIn";
+import AdminLogin from "./pages/admin/AdminLogin";
+import AdminPanel from "./pages/admin/AdminPanel";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -35,6 +37,8 @@ const App = () => (
               <Route path="/auth" element={<Auth />} />
               <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
               <Route path="/checkin/:token" element={<CheckIn />} />
+              <Route path="/admin/login" element={<AdminLogin />} />
+              <Route path="/admin" element={<ProtectedRoute><AdminPanel /></ProtectedRoute>} />
               <Route path="/dashboard" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
                 <Route index element={<Overview />} />
                 <Route path="services" element={<Services />} />
