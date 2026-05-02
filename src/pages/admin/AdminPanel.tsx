@@ -3,19 +3,22 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import { Logo } from "@/components/Logo";
+import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  Loader2, Shield, LogOut, Users, Building2, CreditCard, TrendingUp,
-  Check, X, Calendar, DollarSign, Activity
+  Loader2, Shield, LogOut, Building2, CreditCard, TrendingUp,
+  Check, X, Calendar, DollarSign, Activity, Wallet, Plus
 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
 
+const OWNER_EMAIL = "elseadyosef56@gmail.com";
+
 interface Biz { id: string; name: string; slug: string; category: string | null; status: string; created_at: string; trial_end_date: string; phone: string | null; whatsapp_number: string | null; }
 interface PayReq { id: string; business_id: string; plan: string; method: string; amount: number; reference: string | null; status: string; created_at: string; approved_at: string | null; }
 interface Sub { id: string; business_id: string; plan: string; status: string; start_date: string; end_date: string; }
+interface WalletRow { business_id: string; balance: number; }
 
 const AdminPanel = () => {
   const { user, signOut } = useAuth();
@@ -24,13 +27,21 @@ const AdminPanel = () => {
   const [businesses, setBusinesses] = useState<Biz[]>([]);
   const [payments, setPayments] = useState<PayReq[]>([]);
   const [subs, setSubs] = useState<Sub[]>([]);
+  const [wallets, setWallets] = useState<WalletRow[]>([]);
   const [bookingsCount, setBookingsCount] = useState(0);
   const [todayBookings, setTodayBookings] = useState(0);
+  const [topupAmounts, setTopupAmounts] = useState<Record<string, string>>({});
 
-  // Auth gate
+  // Strict gate: must be the owner email AND have super_admin role
   useEffect(() => {
     (async () => {
       if (!user) { navigate("/admin/login", { replace: true }); return; }
+      if (user.email?.toLowerCase() !== OWNER_EMAIL) {
+        toast.error("غير مصرح");
+        await supabase.auth.signOut();
+        navigate("/admin/login", { replace: true });
+        return;
+      }
       const { data } = await supabase
         .from("user_roles").select("id")
         .eq("user_id", user.id).eq("role", "super_admin" as any).maybeSingle();
@@ -40,10 +51,11 @@ const AdminPanel = () => {
   }, [user, navigate]);
 
   const load = async () => {
-    const [bRes, pRes, sRes, bkAll, bkToday] = await Promise.all([
+    const [bRes, pRes, sRes, wRes, bkAll, bkToday] = await Promise.all([
       supabase.from("businesses").select("*").order("created_at", { ascending: false }),
       supabase.from("payment_requests").select("*").order("created_at", { ascending: false }),
       supabase.from("subscriptions").select("*").order("created_at", { ascending: false }),
+      supabase.from("wallets" as any).select("business_id, balance"),
       supabase.from("bookings").select("*", { count: "exact", head: true }),
       supabase.from("bookings").select("*", { count: "exact", head: true })
         .gte("start_time", new Date(new Date().setHours(0,0,0,0)).toISOString()),
@@ -51,6 +63,7 @@ const AdminPanel = () => {
     setBusinesses((bRes.data || []) as Biz[]);
     setPayments((pRes.data || []) as PayReq[]);
     setSubs((sRes.data || []) as Sub[]);
+    setWallets((wRes.data || []) as any as WalletRow[]);
     setBookingsCount(bkAll.count ?? 0);
     setTodayBookings(bkToday.count ?? 0);
   };
@@ -58,13 +71,11 @@ const AdminPanel = () => {
   useEffect(() => { if (authorized) load(); }, [authorized]);
 
   const handleApprove = async (req: PayReq) => {
-    // Approve payment + extend subscription
     const { error: pErr } = await supabase.from("payment_requests")
       .update({ status: "approved", approved_at: new Date().toISOString() })
       .eq("id", req.id);
     if (pErr) { toast.error(pErr.message); return; }
 
-    // Find existing subscription for this business
     const { data: existingSub } = await supabase
       .from("subscriptions").select("*")
       .eq("business_id", req.business_id)
@@ -106,6 +117,38 @@ const AdminPanel = () => {
     load();
   };
 
+  const handleTopup = async (businessId: string) => {
+    const raw = topupAmounts[businessId];
+    const amt = Number(raw);
+    if (!amt || amt <= 0) { toast.error("أدخل مبلغاً صحيحاً"); return; }
+
+    const current = wallets.find(w => w.business_id === businessId)?.balance ?? 0;
+    const newBal = Number(current) + amt;
+
+    // Upsert wallet
+    const { data: existing } = await supabase.from("wallets" as any)
+      .select("id").eq("business_id", businessId).maybeSingle();
+
+    if (existing) {
+      const { error } = await supabase.from("wallets" as any)
+        .update({ balance: newBal }).eq("business_id", businessId);
+      if (error) { toast.error(error.message); return; }
+    } else {
+      const { error } = await supabase.from("wallets" as any)
+        .insert({ business_id: businessId, balance: newBal });
+      if (error) { toast.error(error.message); return; }
+    }
+
+    await supabase.from("wallet_transactions" as any).insert({
+      business_id: businessId, type: "topup", amount: amt,
+      balance_after: newBal, reference: "شحن يدوي بواسطة المالك"
+    });
+
+    toast.success(`تم شحن ${amt} د.ل`);
+    setTopupAmounts(p => ({ ...p, [businessId]: "" }));
+    load();
+  };
+
   const handleSignOut = async () => {
     await signOut();
     navigate("/admin/login", { replace: true });
@@ -116,6 +159,7 @@ const AdminPanel = () => {
   }
 
   const totalRevenue = payments.filter(p => p.status === "approved").reduce((s, p) => s + Number(p.amount || 0), 0);
+  const totalWallets = wallets.reduce((s, w) => s + Number(w.balance || 0), 0);
   const pendingCount = payments.filter(p => p.status === "pending").length;
   const activeBiz = businesses.filter(b => b.status === "active").length;
 
@@ -123,14 +167,13 @@ const AdminPanel = () => {
     { label: "إجمالي المنشآت", value: businesses.length, icon: Building2, color: "from-emerald-500 to-teal-600" },
     { label: "منشآت مفعّلة", value: activeBiz, icon: Activity, color: "from-blue-500 to-indigo-600" },
     { label: "إيرادات معتمدة", value: `${totalRevenue.toLocaleString()} د.ل`, icon: DollarSign, color: "from-amber-500 to-orange-600" },
-    { label: "طلبات معلّقة", value: pendingCount, icon: CreditCard, color: "from-rose-500 to-pink-600" },
+    { label: "إجمالي المحافظ", value: `${totalWallets.toLocaleString()} د.ل`, icon: Wallet, color: "from-fuchsia-500 to-pink-600" },
     { label: "حجوزات اليوم", value: todayBookings, icon: Calendar, color: "from-violet-500 to-purple-600" },
     { label: "إجمالي الحجوزات", value: bookingsCount, icon: TrendingUp, color: "from-cyan-500 to-blue-600" },
   ];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-emerald-950 text-white">
-      {/* Top bar */}
       <header className="sticky top-0 z-30 bg-slate-900/80 backdrop-blur-xl border-b border-white/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
@@ -138,7 +181,7 @@ const AdminPanel = () => {
               <Shield className="w-5 h-5 text-slate-900" strokeWidth={2.5} />
             </div>
             <div className="min-w-0">
-              <p className="text-xs text-amber-300/80 font-bold">SUPER ADMIN</p>
+              <p className="text-xs text-amber-300/80 font-bold">PLATFORM OWNER</p>
               <p className="text-sm font-bold truncate">لوحة المالك</p>
             </div>
           </div>
@@ -149,7 +192,7 @@ const AdminPanel = () => {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
-        {/* Stats grid */}
+        {/* Stats */}
         <section className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-4">
           {stats.map((s) => (
             <div key={s.label} className="rounded-2xl p-4 bg-white/5 border border-white/10 backdrop-blur-sm hover:bg-white/10 transition-colors">
@@ -162,14 +205,99 @@ const AdminPanel = () => {
           ))}
         </section>
 
-        <Tabs defaultValue="payments" className="w-full">
-          <TabsList className="bg-white/5 border border-white/10 h-11 w-full sm:w-auto">
+        <Tabs defaultValue="businesses" className="w-full">
+          <TabsList className="bg-white/5 border border-white/10 h-11 w-full sm:w-auto flex-wrap">
+            <TabsTrigger value="businesses" className="data-[state=active]:bg-amber-500 data-[state=active]:text-slate-900 flex-1 sm:flex-none">المنشآت ({businesses.length})</TabsTrigger>
+            <TabsTrigger value="wallets" className="data-[state=active]:bg-amber-500 data-[state=active]:text-slate-900 flex-1 sm:flex-none">المحافظ</TabsTrigger>
             <TabsTrigger value="payments" className="data-[state=active]:bg-amber-500 data-[state=active]:text-slate-900 flex-1 sm:flex-none">
               طلبات الدفع {pendingCount > 0 && <span className="mr-2 bg-rose-500 text-white text-[10px] px-1.5 rounded-full">{pendingCount}</span>}
             </TabsTrigger>
-            <TabsTrigger value="businesses" className="data-[state=active]:bg-amber-500 data-[state=active]:text-slate-900 flex-1 sm:flex-none">المنشآت</TabsTrigger>
             <TabsTrigger value="subs" className="data-[state=active]:bg-amber-500 data-[state=active]:text-slate-900 flex-1 sm:flex-none">الاشتراكات</TabsTrigger>
           </TabsList>
+
+          {/* Businesses with subscription end-date */}
+          <TabsContent value="businesses" className="mt-4 space-y-3">
+            {businesses.length === 0 ? (
+              <p className="text-center text-white/60 py-12">لا توجد منشآت بعد.</p>
+            ) : businesses.map(b => {
+              const sub = subs.find(s => s.business_id === b.id);
+              const endDate = sub ? new Date(sub.end_date) : new Date(b.trial_end_date);
+              const daysLeft = Math.ceil((endDate.getTime() - Date.now()) / 86400000);
+              return (
+                <div key={b.id} className="rounded-2xl p-4 sm:p-5 bg-white/5 border border-white/10 backdrop-blur-sm">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 flex-wrap mb-1.5">
+                        <h3 className="font-bold text-base">{b.name}</h3>
+                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
+                          b.status === "active" ? "bg-emerald-500/20 text-emerald-300" :
+                          b.status === "trial" ? "bg-blue-500/20 text-blue-300" :
+                          b.status === "suspended" ? "bg-rose-500/20 text-rose-300" :
+                          "bg-white/10 text-white/70"
+                        }`}>{b.status}</span>
+                        {b.category && <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/10 text-white/70">{b.category}</span>}
+                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
+                          daysLeft < 0 ? "bg-rose-500/20 text-rose-300" :
+                          daysLeft < 7 ? "bg-amber-500/20 text-amber-300" :
+                          "bg-emerald-500/20 text-emerald-300"
+                        }`}>
+                          {daysLeft > 0 ? `${daysLeft} يوم متبقّي` : "منتهي"}
+                        </span>
+                      </div>
+                      <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-white/70">
+                        <span>الرابط: <b className="text-white" dir="ltr">/{b.slug}</b></span>
+                        {b.phone && <span dir="ltr">📞 {b.phone}</span>}
+                        {b.whatsapp_number && <span dir="ltr">💬 {b.whatsapp_number}</span>}
+                        <span>انضم: {format(new Date(b.created_at), "d MMM yyyy", { locale: ar })}</span>
+                        <span>الاشتراك حتى: <b className="text-amber-300">{format(endDate, "d MMM yyyy", { locale: ar })}</b></span>
+                      </div>
+                    </div>
+                    <div className="flex gap-2 shrink-0">
+                      <Button size="sm" variant="outline" asChild className="bg-transparent border-white/20 text-white hover:bg-white/10">
+                        <a href={`/${b.slug}`} target="_blank" rel="noopener">عرض</a>
+                      </Button>
+                      <Button size="sm" onClick={() => handleSuspend(b)}
+                        className={b.status === "suspended" ? "bg-emerald-500 hover:bg-emerald-600" : "bg-rose-500 hover:bg-rose-600"}>
+                        {b.status === "suspended" ? "تفعيل" : "تعليق"}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </TabsContent>
+
+          {/* Wallets */}
+          <TabsContent value="wallets" className="mt-4 space-y-3">
+            <p className="text-xs text-white/50 mb-2">شحن محافظ المنشآت — عند كل حجز تُخصم 5% تلقائياً.</p>
+            {businesses.map(b => {
+              const w = wallets.find(x => x.business_id === b.id);
+              const bal = Number(w?.balance ?? 0);
+              return (
+                <div key={b.id} className="rounded-2xl p-4 sm:p-5 bg-white/5 border border-white/10 backdrop-blur-sm">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <h3 className="font-bold">{b.name}</h3>
+                      <p className={`text-sm mt-1 font-display font-extrabold ${bal <= 0 ? "text-rose-300" : "text-emerald-300"}`}>
+                        الرصيد: {bal.toLocaleString()} د.ل
+                      </p>
+                    </div>
+                    <div className="flex gap-2 items-center">
+                      <Input
+                        type="number" min={1} placeholder="مبلغ"
+                        value={topupAmounts[b.id] || ""}
+                        onChange={(e) => setTopupAmounts(p => ({ ...p, [b.id]: e.target.value }))}
+                        className="h-9 w-28 bg-white/5 border-white/10 text-white"
+                      />
+                      <Button size="sm" onClick={() => handleTopup(b.id)} className="bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold">
+                        <Plus className="w-4 h-4 ml-1" /> شحن
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </TabsContent>
 
           {/* Payments */}
           <TabsContent value="payments" className="mt-4 space-y-3">
@@ -213,45 +341,6 @@ const AdminPanel = () => {
                 </div>
               );
             })}
-          </TabsContent>
-
-          {/* Businesses */}
-          <TabsContent value="businesses" className="mt-4 space-y-3">
-            {businesses.length === 0 ? (
-              <p className="text-center text-white/60 py-12">لا توجد منشآت بعد.</p>
-            ) : businesses.map(b => (
-              <div key={b.id} className="rounded-2xl p-4 sm:p-5 bg-white/5 border border-white/10 backdrop-blur-sm">
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2 flex-wrap mb-1.5">
-                      <h3 className="font-bold text-base">{b.name}</h3>
-                      <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
-                        b.status === "active" ? "bg-emerald-500/20 text-emerald-300" :
-                        b.status === "trial" ? "bg-blue-500/20 text-blue-300" :
-                        b.status === "suspended" ? "bg-rose-500/20 text-rose-300" :
-                        "bg-white/10 text-white/70"
-                      }`}>{b.status}</span>
-                      {b.category && <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/10 text-white/70">{b.category}</span>}
-                    </div>
-                    <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-white/70">
-                      <span>الرابط: <b className="text-white" dir="ltr">/{b.slug}</b></span>
-                      {b.phone && <span dir="ltr">📞 {b.phone}</span>}
-                      {b.whatsapp_number && <span dir="ltr">💬 {b.whatsapp_number}</span>}
-                      <span>أُنشئت: {format(new Date(b.created_at), "d MMM yyyy", { locale: ar })}</span>
-                    </div>
-                  </div>
-                  <div className="flex gap-2 shrink-0">
-                    <Button size="sm" variant="outline" asChild className="bg-transparent border-white/20 text-white hover:bg-white/10">
-                      <a href={`/${b.slug}`} target="_blank" rel="noopener">عرض</a>
-                    </Button>
-                    <Button size="sm" onClick={() => handleSuspend(b)}
-                      className={b.status === "suspended" ? "bg-emerald-500 hover:bg-emerald-600" : "bg-rose-500 hover:bg-rose-600"}>
-                      {b.status === "suspended" ? "تفعيل" : "تعليق"}
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            ))}
           </TabsContent>
 
           {/* Subscriptions */}

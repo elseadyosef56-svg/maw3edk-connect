@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Check, CreditCard, Loader2, Sparkles, Banknote, Smartphone, ShieldCheck, Crown, Zap } from "lucide-react";
+import { Check, CreditCard, Loader2, Sparkles, Banknote, Smartphone, ShieldCheck, Crown, Zap, Wallet, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 
 const plans = [
@@ -42,6 +42,9 @@ const Billing = () => {
   const [reference, setReference] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [requests, setRequests] = useState<any[]>([]);
+  const [walletBalance, setWalletBalance] = useState<number>(0);
+  const [topupAmt, setTopupAmt] = useState<string>("");
+  const [topupSubmitting, setTopupSubmitting] = useState(false);
 
   // Card form (visual / for collecting reference; processed manually until Stripe live)
   const [cardNumber, setCardNumber] = useState("");
@@ -57,10 +60,34 @@ const Billing = () => {
 
   const load = async () => {
     if (!business) return;
-    const { data } = await supabase.from("payment_requests").select("*").eq("business_id", business.id).order("created_at", { ascending: false });
-    setRequests(data || []);
+    const [reqs, w] = await Promise.all([
+      supabase.from("payment_requests").select("*").eq("business_id", business.id).order("created_at", { ascending: false }),
+      supabase.from("wallets" as any).select("balance").eq("business_id", business.id).maybeSingle(),
+    ]);
+    setRequests(reqs.data || []);
+    setWalletBalance(Number((w.data as any)?.balance ?? 0));
   };
   useEffect(() => { load(); }, [business]);
+
+  const submitTopup = async () => {
+    if (!business) return;
+    const amt = Number(topupAmt);
+    if (!amt || amt < 10) { toast.error("أدخل مبلغاً 10 د.ل أو أكثر"); return; }
+    setTopupSubmitting(true);
+    const { error } = await supabase.from("payment_requests").insert({
+      business_id: business.id,
+      plan: "basic" as any,
+      method: "bank_transfer" as any,
+      amount: amt,
+      reference: `[WALLET TOPUP] طلب شحن محفظة بقيمة ${amt} د.ل`,
+      status: "pending" as any,
+    });
+    setTopupSubmitting(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success("تم إرسال طلب الشحن. سيتم تفعيله بعد المراجعة.");
+    setTopupAmt("");
+    load();
+  };
 
   const submit = async () => {
     if (!business) return;
@@ -119,6 +146,40 @@ const Billing = () => {
           <Button size="lg" onClick={() => setOpen(true)} className="bg-gradient-primary shadow-glow h-12 px-6">
             <CreditCard className="w-5 h-5 ml-2" /> اشترك الآن
           </Button>
+        </div>
+      </div>
+
+      {/* Wallet card */}
+      <div className={`luxe-card rounded-3xl p-7 relative overflow-hidden ${walletBalance <= 0 ? "ring-2 ring-rose-400/40" : ""}`}>
+        <div className="absolute -top-12 -right-12 w-48 h-48 bg-accent/10 rounded-full blur-3xl" />
+        <div className="relative flex items-start justify-between flex-wrap gap-4">
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 rounded-2xl bg-gradient-primary grid place-items-center text-primary-foreground shadow-glow">
+              <Wallet className="w-7 h-7" />
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">رصيد محفظة العمولات</p>
+              <p className={`text-3xl font-display font-extrabold ${walletBalance <= 0 ? "text-rose-500" : "text-primary"}`}>
+                {walletBalance.toLocaleString()} <span className="text-base font-normal">د.ل</span>
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">يُخصم 5% من كل حجز تلقائياً.</p>
+              {walletBalance <= 0 && (
+                <p className="text-xs text-rose-500 flex items-center gap-1 mt-1.5 font-medium">
+                  <AlertTriangle className="w-3.5 h-3.5" /> الرصيد صفر — لن تستقبل المنشأة حجوزات جديدة.
+                </p>
+              )}
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <Input
+              type="number" min={10} placeholder="مبلغ الشحن"
+              value={topupAmt} onChange={(e) => setTopupAmt(e.target.value)}
+              className="h-11 w-32"
+            />
+            <Button onClick={submitTopup} disabled={topupSubmitting} className="bg-gradient-primary h-11">
+              {topupSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : "طلب شحن"}
+            </Button>
+          </div>
         </div>
       </div>
 

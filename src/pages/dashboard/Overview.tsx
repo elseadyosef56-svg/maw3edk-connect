@@ -2,13 +2,14 @@ import { useEffect, useState } from "react";
 import { useBusiness } from "@/contexts/BusinessContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Link as LinkIcon, Calendar, Users, Scissors, BarChart3 } from "lucide-react";
+import { Sparkles, Link as LinkIcon, Calendar, Users, Scissors, BarChart3, Wallet, AlertTriangle, Tag } from "lucide-react";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
 
 const Overview = () => {
   const { business } = useBusiness();
   const [stats, setStats] = useState({ today: 0, week: 0, revenue: 0, employees: 0 });
+  const [walletBalance, setWalletBalance] = useState<number>(0);
 
   useEffect(() => {
     if (!business) return;
@@ -16,6 +17,9 @@ const Overview = () => {
       const startToday = new Date(); startToday.setHours(0, 0, 0, 0);
       const endToday = new Date(); endToday.setHours(23, 59, 59, 999);
       const startWeek = new Date(); startWeek.setDate(startWeek.getDate() - 7);
+
+      const wRes = await supabase.from("wallets" as any).select("balance").eq("business_id", business.id).maybeSingle();
+      setWalletBalance(Number((wRes.data as any)?.balance ?? 0));
 
       const [todayRes, weekRes, empRes] = await Promise.all([
         supabase.from("bookings").select("price_snapshot, status", { count: "exact" })
@@ -82,6 +86,29 @@ const Overview = () => {
             <Button size="sm" asChild className="bg-gradient-primary"><a href={publicUrl} target="_blank" rel="noreferrer">معاينة</a></Button>
           </div>
         </div>
+      </div>
+
+      {/* Wallet card */}
+      <div className={`glass rounded-3xl p-5 sm:p-6 flex flex-wrap items-center justify-between gap-4 ${walletBalance <= 0 ? "border-2 border-rose-400/40" : ""}`}>
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-primary grid place-items-center text-primary-foreground shadow-glow">
+            <Wallet className="w-6 h-6" />
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground">رصيد محفظة العمولات</p>
+            <p className={`text-2xl font-display font-extrabold ${walletBalance <= 0 ? "text-rose-500" : "text-primary"}`}>
+              {walletBalance.toLocaleString()} د.ل
+            </p>
+            {walletBalance <= 0 && (
+              <p className="text-xs text-rose-500 flex items-center gap-1 mt-1">
+                <AlertTriangle className="w-3 h-3" /> رصيدك صفر — لن يتمكن العملاء من الحجز
+              </p>
+            )}
+          </div>
+        </div>
+        <Button asChild size="sm" variant="outline">
+          <Link to="/dashboard/billing">شحن المحفظة</Link>
+        </Button>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
