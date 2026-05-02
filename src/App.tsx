@@ -16,6 +16,7 @@ import Employees from "./pages/dashboard/Employees";
 import CalendarPage from "./pages/dashboard/CalendarPage";
 import SettingsPage from "./pages/dashboard/Settings";
 import Billing from "./pages/dashboard/Billing";
+import Promotions from "./pages/dashboard/Promotions";
 import PublicBooking from "./pages/PublicBooking";
 import CheckIn from "./pages/CheckIn";
 import AdminLogin from "./pages/admin/AdminLogin";
@@ -45,6 +46,7 @@ const App = () => (
                 <Route path="employees" element={<Employees />} />
                 <Route path="calendar" element={<CalendarPage />} />
                 <Route path="billing" element={<Billing />} />
+                <Route path="promotions" element={<Promotions />} />
                 <Route path="settings" element={<SettingsPage />} />
               </Route>
               <Route path="/:slug" element={<PublicBooking />} />

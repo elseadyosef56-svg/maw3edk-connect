@@ -3,7 +3,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useBusiness } from "@/contexts/BusinessContext";
 import { Logo } from "./Logo";
 import { Button } from "@/components/ui/button";
-import { Calendar, LayoutDashboard, Scissors, Users, Settings, CreditCard, LogOut, Loader2, Menu, X } from "lucide-react";
+import { Calendar, LayoutDashboard, Scissors, Users, Settings, CreditCard, LogOut, Loader2, Menu, X, Tag } from "lucide-react";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 
@@ -12,7 +12,8 @@ const items = [
   { to: "/dashboard/calendar", label: "التقويم", icon: Calendar },
   { to: "/dashboard/services", label: "الخدمات", icon: Scissors },
   { to: "/dashboard/employees", label: "الموظفون", icon: Users },
-  { to: "/dashboard/billing", label: "الاشتراك", icon: CreditCard },
+  { to: "/dashboard/promotions", label: "العروض", icon: Tag },
+  { to: "/dashboard/billing", label: "الاشتراك والمحفظة", icon: CreditCard },
   { to: "/dashboard/settings", label: "الإعدادات", icon: Settings },
 ];
 
