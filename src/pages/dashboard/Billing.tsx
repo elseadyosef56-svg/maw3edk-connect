@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Check, CreditCard, Loader2, Sparkles, Banknote, Smartphone, ShieldCheck, Crown, Zap } from "lucide-react";
+import { Check, CreditCard, Loader2, Sparkles, Banknote, Smartphone, ShieldCheck, Crown, Zap, Wallet, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 
 const plans = [
@@ -42,6 +42,9 @@ const Billing = () => {
   const [reference, setReference] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [requests, setRequests] = useState<any[]>([]);
+  const [walletBalance, setWalletBalance] = useState<number>(0);
+  const [topupAmt, setTopupAmt] = useState<string>("");
+  const [topupSubmitting, setTopupSubmitting] = useState(false);
 
   // Card form (visual / for collecting reference; processed manually until Stripe live)
   const [cardNumber, setCardNumber] = useState("");
@@ -57,10 +60,34 @@ const Billing = () => {
 
   const load = async () => {
     if (!business) return;
-    const { data } = await supabase.from("payment_requests").select("*").eq("business_id", business.id).order("created_at", { ascending: false });
-    setRequests(data || []);
+    const [reqs, w] = await Promise.all([
+      supabase.from("payment_requests").select("*").eq("business_id", business.id).order("created_at", { ascending: false }),
+      supabase.from("wallets" as any).select("balance").eq("business_id", business.id).maybeSingle(),
+    ]);
+    setRequests(reqs.data || []);
+    setWalletBalance(Number((w.data as any)?.balance ?? 0));
   };
   useEffect(() => { load(); }, [business]);
+
+  const submitTopup = async () => {
+    if (!business) return;
+    const amt = Number(topupAmt);
+    if (!amt || amt < 10) { toast.error("أدخل مبلغاً 10 د.ل أو أكثر"); return; }
+    setTopupSubmitting(true);
+    const { error } = await supabase.from("payment_requests").insert({
+      business_id: business.id,
+      plan: "basic" as any,
+      method: "bank_transfer" as any,
+      amount: amt,
+      reference: `[WALLET TOPUP] طلب شحن محفظة بقيمة ${amt} د.ل`,
+      status: "pending" as any,
+    });
+    setTopupSubmitting(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success("تم إرسال طلب الشحن. سيتم تفعيله بعد المراجعة.");
+    setTopupAmt("");
+    load();
+  };
 
   const submit = async () => {
     if (!business) return;
