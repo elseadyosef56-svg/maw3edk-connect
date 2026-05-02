@@ -33,6 +33,7 @@ const PublicBooking = () => {
   const [services, setServices] = useState<Service[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [bookings, setBookings] = useState<{ start_time: string; end_time: string; employee_id: string }[]>([]);
+  const [promos, setPromos] = useState<{ id: string; title: string; description: string | null; discount_percent: number; ends_at: string; service_id: string | null; }[]>([]);
   const [loading, setLoading] = useState(true);
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
 
@@ -58,12 +59,15 @@ const PublicBooking = () => {
         .eq("slug", slug).maybeSingle();
       if (!b) { setLoading(false); return; }
       setBiz(b as Biz);
-      const [sRes, eRes] = await Promise.all([
+      const [sRes, eRes, pRes] = await Promise.all([
         supabase.from("services").select("*").eq("business_id", b.id).eq("is_active", true).order("name"),
         supabase.from("employees").select("id, name, service_ids, image_url").eq("business_id", b.id).eq("is_active", true).order("name"),
+        supabase.from("promotions" as any).select("id, title, description, discount_percent, ends_at, service_id")
+          .eq("business_id", b.id).eq("is_active", true).gt("ends_at", new Date().toISOString()),
       ]);
       setServices((sRes.data || []) as Service[]);
       setEmployees((eRes.data || []) as Employee[]);
+      setPromos((pRes.data || []) as any);
       setLoading(false);
     })();
   }, [slug]);
