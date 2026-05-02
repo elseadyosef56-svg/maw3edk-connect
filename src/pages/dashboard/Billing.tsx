@@ -149,6 +149,40 @@ const Billing = () => {
         </div>
       </div>
 
+      {/* Wallet card */}
+      <div className={`luxe-card rounded-3xl p-7 relative overflow-hidden ${walletBalance <= 0 ? "ring-2 ring-rose-400/40" : ""}`}>
+        <div className="absolute -top-12 -right-12 w-48 h-48 bg-accent/10 rounded-full blur-3xl" />
+        <div className="relative flex items-start justify-between flex-wrap gap-4">
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 rounded-2xl bg-gradient-primary grid place-items-center text-primary-foreground shadow-glow">
+              <Wallet className="w-7 h-7" />
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">رصيد محفظة العمولات</p>
+              <p className={`text-3xl font-display font-extrabold ${walletBalance <= 0 ? "text-rose-500" : "text-primary"}`}>
+                {walletBalance.toLocaleString()} <span className="text-base font-normal">د.ل</span>
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">يُخصم 5% من كل حجز تلقائياً.</p>
+              {walletBalance <= 0 && (
+                <p className="text-xs text-rose-500 flex items-center gap-1 mt-1.5 font-medium">
+                  <AlertTriangle className="w-3.5 h-3.5" /> الرصيد صفر — لن تستقبل المنشأة حجوزات جديدة.
+                </p>
+              )}
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <Input
+              type="number" min={10} placeholder="مبلغ الشحن"
+              value={topupAmt} onChange={(e) => setTopupAmt(e.target.value)}
+              className="h-11 w-32"
+            />
+            <Button onClick={submitTopup} disabled={topupSubmitting} className="bg-gradient-primary h-11">
+              {topupSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : "طلب شحن"}
+            </Button>
+          </div>
+        </div>
+      </div>
+
       {/* Plans */}
       <div>
         <div className="flex items-baseline justify-between mb-5">
