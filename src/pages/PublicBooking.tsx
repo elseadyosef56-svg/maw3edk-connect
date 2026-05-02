@@ -27,6 +27,37 @@ interface Biz {
 interface Service { id: string; name: string; description: string | null; price: number; duration_minutes: number; }
 interface Employee { id: string; name: string; service_ids: string[]; image_url: string | null; }
 
+interface Promo { id: string; title: string; description: string | null; discount_percent: number; ends_at: string; service_id: string | null; }
+
+const PromoBanner = ({ promo }: { promo: Promo }) => {
+  const [now, setNow] = useState(Date.now());
+  useEffect(() => { const t = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(t); }, []);
+  const diff = new Date(promo.ends_at).getTime() - now;
+  if (diff <= 0) return null;
+  const d = Math.floor(diff / 86400000);
+  const h = Math.floor((diff % 86400000) / 3600000);
+  const m = Math.floor((diff % 3600000) / 60000);
+  const s = Math.floor((diff % 60000) / 1000);
+  return (
+    <div className="rounded-2xl p-4 bg-gradient-to-r from-rose-500 via-orange-500 to-amber-500 text-white shadow-lg flex items-center justify-between gap-3 flex-wrap">
+      <div className="min-w-0">
+        <div className="flex items-center gap-2 flex-wrap">
+          <Sparkles className="w-4 h-4" />
+          <h3 className="font-bold text-sm sm:text-base">{promo.title}</h3>
+          <span className="bg-white text-rose-600 text-xs font-extrabold px-2.5 py-0.5 rounded-full">-{promo.discount_percent}%</span>
+        </div>
+        {promo.description && <p className="text-xs text-white/90 mt-1">{promo.description}</p>}
+      </div>
+      <div className="text-center bg-white/20 backdrop-blur-sm rounded-xl px-3 py-1.5">
+        <p className="text-[10px] uppercase tracking-wider opacity-80">ينتهي خلال</p>
+        <p className="font-mono font-extrabold text-base tabular-nums" dir="ltr">
+          {d > 0 && `${d}d `}{String(h).padStart(2, "0")}:{String(m).padStart(2, "0")}:{String(s).padStart(2, "0")}
+        </p>
+      </div>
+    </div>
+  );
+};
+
 const PublicBooking = () => {
   const { slug } = useParams();
   const [biz, setBiz] = useState<Biz | null>(null);
