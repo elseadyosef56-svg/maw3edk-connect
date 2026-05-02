@@ -96,7 +96,9 @@ export type Database = {
           description: string | null
           id: string
           instagram: string | null
+          latitude: number | null
           logo_url: string | null
+          longitude: number | null
           name: string
           onboarded: boolean
           owner_id: string
@@ -116,7 +118,9 @@ export type Database = {
           description?: string | null
           id?: string
           instagram?: string | null
+          latitude?: number | null
           logo_url?: string | null
+          longitude?: number | null
           name: string
           onboarded?: boolean
           owner_id: string
@@ -136,7 +140,9 @@ export type Database = {
           description?: string | null
           id?: string
           instagram?: string | null
+          latitude?: number | null
           logo_url?: string | null
+          longitude?: number | null
           name?: string
           onboarded?: boolean
           owner_id?: string
@@ -161,6 +167,7 @@ export type Database = {
           phone: string | null
           service_ids: string[] | null
           updated_at: string
+          user_id: string | null
           working_hours: Json | null
         }
         Insert: {
@@ -173,6 +180,7 @@ export type Database = {
           phone?: string | null
           service_ids?: string[] | null
           updated_at?: string
+          user_id?: string | null
           working_hours?: Json | null
         }
         Update: {
@@ -185,6 +193,7 @@ export type Database = {
           phone?: string | null
           service_ids?: string[] | null
           updated_at?: string
+          user_id?: string | null
           working_hours?: Json | null
         }
         Relationships: [
@@ -278,6 +287,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      promotions: {
+        Row: {
+          business_id: string
+          created_at: string
+          description: string | null
+          discount_percent: number
+          ends_at: string
+          id: string
+          is_active: boolean
+          service_id: string | null
+          starts_at: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          description?: string | null
+          discount_percent: number
+          ends_at: string
+          id?: string
+          is_active?: boolean
+          service_id?: string | null
+          starts_at?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          description?: string | null
+          discount_percent?: number
+          ends_at?: string
+          id?: string
+          is_active?: boolean
+          service_id?: string | null
+          starts_at?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       services: {
         Row: {
@@ -396,11 +447,69 @@ export type Database = {
           },
         ]
       }
+      wallet_transactions: {
+        Row: {
+          amount: number
+          balance_after: number
+          booking_id: string | null
+          business_id: string
+          created_at: string
+          id: string
+          reference: string | null
+          type: Database["public"]["Enums"]["wallet_tx_type"]
+        }
+        Insert: {
+          amount: number
+          balance_after: number
+          booking_id?: string | null
+          business_id: string
+          created_at?: string
+          id?: string
+          reference?: string | null
+          type: Database["public"]["Enums"]["wallet_tx_type"]
+        }
+        Update: {
+          amount?: number
+          balance_after?: number
+          booking_id?: string | null
+          business_id?: string
+          created_at?: string
+          id?: string
+          reference?: string | null
+          type?: Database["public"]["Enums"]["wallet_tx_type"]
+        }
+        Relationships: []
+      }
+      wallets: {
+        Row: {
+          balance: number
+          business_id: string
+          created_at: string
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          balance?: number
+          business_id: string
+          created_at?: string
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          balance?: number
+          business_id?: string
+          created_at?: string
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      get_employee_id_for_user: { Args: { _user_id: string }; Returns: string }
       get_user_business: { Args: { _user_id: string }; Returns: string }
       has_role: {
         Args: {
@@ -409,6 +518,11 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_employee_for_business: {
+        Args: { _business_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_platform_owner_email: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
       app_role: "owner" | "staff" | "admin" | "super_admin"
@@ -424,6 +538,7 @@ export type Database = {
       payment_status: "pending" | "approved" | "rejected"
       subscription_plan: "basic" | "pro" | "premium"
       subscription_status: "trial" | "active" | "expired" | "pending"
+      wallet_tx_type: "topup" | "commission" | "refund" | "adjustment"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -565,6 +680,7 @@ export const Constants = {
       payment_status: ["pending", "approved", "rejected"],
       subscription_plan: ["basic", "pro", "premium"],
       subscription_status: ["trial", "active", "expired", "pending"],
+      wallet_tx_type: ["topup", "commission", "refund", "adjustment"],
     },
   },
 } as const
