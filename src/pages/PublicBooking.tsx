@@ -283,6 +283,15 @@ const PublicBooking = () => {
           </div>
         </div>
 
+        {/* Active promotions banner */}
+        {promos.length > 0 && (
+          <div className="mb-5 space-y-2">
+            {promos.map(p => (
+              <PromoBanner key={p.id} promo={p} />
+            ))}
+          </div>
+        )}
+
         {/* Stepper */}
         <div className="mb-5 px-1">
           <div className="flex items-center gap-1 sm:gap-2">
