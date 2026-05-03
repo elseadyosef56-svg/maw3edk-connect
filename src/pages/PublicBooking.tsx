@@ -162,6 +162,19 @@ const PublicBooking = () => {
     setSubmitting(true);
     const start_time = slot.toISOString();
     const end_time = addMinutes(slot, service.duration_minutes).toISOString();
+    const depositAmount = biz.deposit_enabled
+      ? Math.round(((service.price || 0) * (biz.deposit_percent || 25) / 100) * 100) / 100
+      : null;
+
+    let proofUrl: string | null = null;
+    if (biz.deposit_enabled && paymentMethod === "transfer" && proofFile) {
+      const ext = proofFile.name.split(".").pop();
+      const path = `${biz.id}/${Date.now()}.${ext}`;
+      const up = await supabase.storage.from("payment-proofs").upload(path, proofFile);
+      if (up.error) { toast.error("فشل رفع الإيصال: " + up.error.message); setSubmitting(false); return; }
+      proofUrl = supabase.storage.from("payment-proofs").getPublicUrl(path).data.publicUrl;
+    }
+
     const { data, error } = await supabase.from("bookings").insert({
       business_id: biz.id,
       service_id: service.id,
@@ -171,7 +184,10 @@ const PublicBooking = () => {
       customer_notes: notes.trim() || null,
       start_time, end_time,
       price_snapshot: service.price,
-    }).select("qr_token").maybeSingle();
+      payment_method: biz.deposit_enabled ? paymentMethod : null,
+      deposit_amount: depositAmount,
+      payment_proof_url: proofUrl,
+    } as any).select("qr_token").maybeSingle();
     setSubmitting(false);
     if (error) { toast.error(error.message); return; }
 
