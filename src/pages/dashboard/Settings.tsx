@@ -7,9 +7,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { Loader2, Upload, Building2, Phone, MessageCircle, Clock, Image as ImageIcon, MapPin, Instagram, Check, Copy } from "lucide-react";
+import { Loader2, Upload, Building2, Phone, MessageCircle, Clock, Image as ImageIcon, MapPin, Instagram, Check, Copy, Wallet, Banknote, Crosshair } from "lucide-react";
 import { toast } from "sonner";
 import { defaultHours, dayKeys, dayLabels, WorkingHours, categories, BusinessCategory } from "@/lib/business";
+import { LocationMap } from "@/components/LocationMap";
 
 const SettingsPage = () => {
   const { business, refresh } = useBusiness();
