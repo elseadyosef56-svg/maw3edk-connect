@@ -73,17 +73,42 @@ const Overview = () => {
           )}
         </div>
 
-        <div className="mt-6 flex flex-wrap items-center gap-3 p-4 rounded-2xl bg-secondary/60">
-          <LinkIcon className="w-5 h-5 text-primary shrink-0" />
-          <div className="flex-1 min-w-0">
-            <p className="text-xs text-muted-foreground mb-1">رابط صفحة الحجز العامة</p>
-            <p className="text-sm font-medium truncate" dir="ltr">{publicUrl}</p>
-          </div>
-          <div className="flex gap-2">
-            <Button size="sm" variant="outline" onClick={() => { navigator.clipboard.writeText(publicUrl); toast.success("تم النسخ"); }}>
-              نسخ
-            </Button>
-            <Button size="sm" asChild className="bg-gradient-primary"><a href={publicUrl} target="_blank" rel="noreferrer">معاينة</a></Button>
+        <div className="mt-6 relative overflow-hidden rounded-3xl p-5 sm:p-6 bg-gradient-to-br from-primary via-primary-deep to-purple-700 text-primary-foreground shadow-glow">
+          <div className="absolute -top-10 -left-10 w-40 h-40 bg-white/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-amber-300/20 rounded-full blur-3xl pointer-events-none" />
+          <div className="relative flex flex-wrap items-center gap-4">
+            <div className="hidden sm:grid w-20 h-20 rounded-2xl bg-white/10 backdrop-blur place-items-center shrink-0">
+              <img alt="qr" className="w-16 h-16 rounded-lg bg-white p-1"
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(publicUrl)}`} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider bg-white/15 backdrop-blur px-2.5 py-1 rounded-full mb-2">
+                <Sparkles className="w-3 h-3" /> رابط الحجز الفاخر
+              </p>
+              <p className="text-sm sm:text-base font-bold truncate" dir="ltr">{publicUrl}</p>
+              <p className="text-xs opacity-80 mt-1">شارك هذا الرابط مع زبائنك ليحجزوا في ثوانٍ</p>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 w-full sm:w-auto">
+              <Button size="sm" variant="secondary" className="bg-white/15 hover:bg-white/25 text-white border-white/20"
+                onClick={() => { navigator.clipboard.writeText(publicUrl); toast.success("تم النسخ"); }}>
+                <LinkIcon className="w-3.5 h-3.5 ml-1" /> نسخ
+              </Button>
+              <Button size="sm" variant="secondary" className="bg-white/15 hover:bg-white/25 text-white border-white/20" asChild>
+                <a href={`https://wa.me/?text=${encodeURIComponent("احجز موعدك الآن: " + publicUrl)}`} target="_blank" rel="noreferrer">
+                  <MessageCircle className="w-3.5 h-3.5 ml-1" /> واتساب
+                </a>
+              </Button>
+              <Button size="sm" variant="secondary" className="bg-white/15 hover:bg-white/25 text-white border-white/20"
+                onClick={async () => {
+                  if (navigator.share) { try { await navigator.share({ title: business.name, url: publicUrl }); } catch {} }
+                  else { navigator.clipboard.writeText(publicUrl); toast.success("تم النسخ"); }
+                }}>
+                <Share2 className="w-3.5 h-3.5 ml-1" /> مشاركة
+              </Button>
+              <Button size="sm" className="bg-white text-primary hover:bg-white/90" asChild>
+                <a href={publicUrl} target="_blank" rel="noreferrer">معاينة</a>
+              </Button>
+            </div>
           </div>
         </div>
       </div>
