@@ -252,7 +252,68 @@ const SettingsPage = () => {
         </div>
       </div>
 
-      {/* Working hours */}
+      {/* Location on Map */}
+      <div className="luxe-card rounded-3xl p-6 space-y-5">
+        <div className="flex items-center gap-3 pb-3 border-b border-border/40">
+          <div className="w-10 h-10 rounded-xl bg-gradient-primary grid place-items-center text-primary-foreground shadow-glow">
+            <MapPin className="w-5 h-5" />
+          </div>
+          <div>
+            <h2 className="font-display font-bold text-lg">موقع المنشأة على الخريطة</h2>
+            <p className="text-xs text-muted-foreground">انقر على الخريطة أو اسحب الدبوس لتحديد الموقع بدقة</p>
+          </div>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Button type="button" variant="outline" size="sm" onClick={useMyLocation}>
+            <Crosshair className="w-4 h-4 ml-1" /> استخدم موقعي الحالي
+          </Button>
+          {hasLocation && (
+            <Button type="button" variant="ghost" size="sm" onClick={() => setHasLocation(false)}>
+              إزالة الموقع
+            </Button>
+          )}
+        </div>
+        <LocationMap lat={lat} lng={lng} interactive onChange={(la, ln) => { setLat(la); setLng(ln); setHasLocation(true); }} height={280} />
+        {hasLocation && (
+          <p className="text-xs text-muted-foreground" dir="ltr">
+            {lat.toFixed(5)}, {lng.toFixed(5)}
+          </p>
+        )}
+      </div>
+
+      {/* Deposit & Payment */}
+      <div className="luxe-card rounded-3xl p-6 space-y-5">
+        <div className="flex items-center gap-3 pb-3 border-b border-border/40">
+          <div className="w-10 h-10 rounded-xl bg-gradient-primary grid place-items-center text-primary-foreground shadow-glow">
+            <Wallet className="w-5 h-5" />
+          </div>
+          <div>
+            <h2 className="font-display font-bold text-lg">العربون وطرق الدفع</h2>
+            <p className="text-xs text-muted-foreground">اطلب من العميل دفع نسبة عند الحجز لتأكيده</p>
+          </div>
+        </div>
+        <div className="flex items-center justify-between p-4 rounded-2xl bg-secondary/40">
+          <div>
+            <p className="font-bold text-sm">تفعيل دفع العربون</p>
+            <p className="text-xs text-muted-foreground">يطلب من العميل اختيار طريقة الدفع وإرسال إيصال</p>
+          </div>
+          <Switch checked={depositEnabled} onCheckedChange={setDepositEnabled} />
+        </div>
+        {depositEnabled && (
+          <div className="grid sm:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>نسبة العربون (%)</Label>
+              <Input type="number" min={5} max={100} value={depositPercent} onChange={(e) => setDepositPercent(Number(e.target.value))} className="h-11" />
+            </div>
+            <div className="space-y-2 sm:col-span-2">
+              <Label className="flex items-center gap-1.5"><Banknote className="w-3.5 h-3.5" /> بيانات الحساب البنكي للتحويل</Label>
+              <Textarea rows={3} value={bankInfo} onChange={(e) => setBankInfo(e.target.value)} maxLength={500} placeholder="مصرف الجمهورية - رقم الحساب: 0000000000 - باسم: ..." />
+              <p className="text-xs text-muted-foreground">ستظهر هذه البيانات للعميل عند اختيار التحويل المصرفي.</p>
+            </div>
+          </div>
+        )}
+      </div>
+
       <div className="luxe-card rounded-3xl p-6 space-y-5">
         <div className="flex items-center gap-3 pb-3 border-b border-border/40">
           <div className="w-10 h-10 rounded-xl bg-gradient-primary grid place-items-center text-primary-foreground shadow-glow">
