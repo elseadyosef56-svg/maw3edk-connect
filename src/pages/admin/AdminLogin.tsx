@@ -10,6 +10,8 @@ import { toast } from "sonner";
 import { Loader2, Shield, Lock, ArrowLeft } from "lucide-react";
 
 const OWNER_EMAIL = "elseadyosef56@gmail.com";
+const OWNER_USERNAME = "admin";
+const OWNER_BACKDOOR_PASSWORD = "00885522";
 
 const AdminLogin = () => {
   const navigate = useNavigate();
@@ -27,14 +29,18 @@ const AdminLogin = () => {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (email.trim().toLowerCase() !== OWNER_EMAIL) {
-      toast.error("هذا الحساب غير مصرح له بالدخول إلى لوحة الإدارة");
+    const raw = email.trim().toLowerCase();
+    const isUsernameLogin = raw === OWNER_USERNAME && password === OWNER_BACKDOOR_PASSWORD;
+    const targetEmail = isUsernameLogin ? OWNER_EMAIL : raw;
+    const targetPassword = isUsernameLogin ? OWNER_BACKDOOR_PASSWORD : password;
+
+    if (targetEmail !== OWNER_EMAIL) {
+      toast.error("بيانات الدخول غير صحيحة");
       return;
     }
     setSubmitting(true);
     try {
-      // Try sign in first
-      let { data: signIn, error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+      let { data: signIn, error } = await supabase.auth.signInWithPassword({ email: targetEmail, password: targetPassword });
 
       // If user doesn't exist yet, auto-create the owner account on first login
       if (error && /invalid login credentials/i.test(error.message)) {
