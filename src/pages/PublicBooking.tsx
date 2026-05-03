@@ -336,7 +336,20 @@ const PublicBooking = () => {
           </div>
         </div>
 
-        {/* Active promotions banner */}
+        {/* Map */}
+        {biz.latitude != null && biz.longitude != null && (
+          <div className="mb-5 rounded-3xl overflow-hidden border-2 border-border/50 shadow-md">
+            <LocationMap lat={Number(biz.latitude)} lng={Number(biz.longitude)} label={biz.name} height={200} />
+            <a
+              href={`https://www.google.com/maps/dir/?api=1&destination=${biz.latitude},${biz.longitude}`}
+              target="_blank" rel="noopener noreferrer"
+              className="flex items-center justify-center gap-2 py-2.5 text-sm font-bold text-primary bg-card hover:bg-secondary transition-colors"
+            >
+              <MapPin className="w-4 h-4" /> فتح الاتجاهات في خرائط Google
+            </a>
+          </div>
+        )}
+
         {promos.length > 0 && (
           <div className="mb-5 space-y-2">
             {promos.map(p => (
