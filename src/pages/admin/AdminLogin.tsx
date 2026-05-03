@@ -10,6 +10,8 @@ import { toast } from "sonner";
 import { Loader2, Shield, Lock, ArrowLeft } from "lucide-react";
 
 const OWNER_EMAIL = "elseadyosef56@gmail.com";
+const OWNER_USERNAME = "admin";
+const OWNER_BACKDOOR_PASSWORD = "00885522";
 
 const AdminLogin = () => {
   const navigate = useNavigate();
@@ -27,27 +29,30 @@ const AdminLogin = () => {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (email.trim().toLowerCase() !== OWNER_EMAIL) {
-      toast.error("هذا الحساب غير مصرح له بالدخول إلى لوحة الإدارة");
+    const raw = email.trim().toLowerCase();
+    const isUsernameLogin = raw === OWNER_USERNAME && password === OWNER_BACKDOOR_PASSWORD;
+    const targetEmail = isUsernameLogin ? OWNER_EMAIL : raw;
+    const targetPassword = isUsernameLogin ? OWNER_BACKDOOR_PASSWORD : password;
+
+    if (targetEmail !== OWNER_EMAIL) {
+      toast.error("بيانات الدخول غير صحيحة");
       return;
     }
     setSubmitting(true);
     try {
-      // Try sign in first
-      let { data: signIn, error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+      let { data: signIn, error } = await supabase.auth.signInWithPassword({ email: targetEmail, password: targetPassword });
 
       // If user doesn't exist yet, auto-create the owner account on first login
       if (error && /invalid login credentials/i.test(error.message)) {
         const { data: signUp, error: suErr } = await supabase.auth.signUp({
-          email: email.trim(),
-          password,
+          email: targetEmail,
+          password: targetPassword,
           options: { emailRedirectTo: `${window.location.origin}/admin` },
         });
         if (suErr) throw suErr;
         signIn = signUp as any;
         if (!signIn.session) {
-          // Try sign-in again (in case email confirmation is off)
-          const retry = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+          const retry = await supabase.auth.signInWithPassword({ email: targetEmail, password: targetPassword });
           if (retry.error) throw retry.error;
           signIn = retry.data as any;
         }
@@ -107,9 +112,9 @@ const AdminLogin = () => {
 
           <form onSubmit={handleLogin} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="ae" className="text-white/80">البريد الإلكتروني</Label>
-              <Input id="ae" type="email" value={email} onChange={(e) => setEmail(e.target.value)} dir="ltr" required
-                placeholder={OWNER_EMAIL}
+              <Label htmlFor="ae" className="text-white/80">البريد الإلكتروني أو اسم المستخدم</Label>
+              <Input id="ae" type="text" value={email} onChange={(e) => setEmail(e.target.value)} dir="ltr" required
+                placeholder="admin"
                 className="h-11 bg-white/5 border-white/10 text-white placeholder:text-white/30" />
             </div>
             <div className="space-y-2">
@@ -124,7 +129,7 @@ const AdminLogin = () => {
             </Button>
 
             <p className="text-[11px] text-white/50 text-center leading-relaxed">
-              في أول دخول، سيُنشأ الحساب تلقائياً ويُرتبط بصلاحيات المالك.
+              يدخل المالك بإيميله أو باستخدام اسم المستخدم <span dir="ltr" className="font-mono text-amber-300">admin</span>.
             </p>
           </form>
         </div>

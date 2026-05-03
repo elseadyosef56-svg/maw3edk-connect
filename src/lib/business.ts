@@ -16,12 +16,17 @@ export interface BusinessRecord {
   status: "trial" | "active" | "expired" | "suspended";
   trial_end_date: string;
   onboarded: boolean;
+  latitude?: number | null;
+  longitude?: number | null;
+  deposit_enabled?: boolean;
+  deposit_percent?: number;
+  bank_info?: string | null;
 }
 
 export const fetchMyBusiness = async (userId: string): Promise<BusinessRecord | null> => {
   const { data } = await supabase
     .from("businesses")
-    .select("id, name, slug, category, phone, whatsapp_number, address, description, instagram, logo_url, cover_url, working_hours, status, trial_end_date, onboarded")
+    .select("id, name, slug, category, phone, whatsapp_number, address, description, instagram, logo_url, cover_url, working_hours, status, trial_end_date, onboarded, latitude, longitude, deposit_enabled, deposit_percent, bank_info")
     .eq("owner_id", userId)
     .maybeSingle();
   return data as BusinessRecord | null;

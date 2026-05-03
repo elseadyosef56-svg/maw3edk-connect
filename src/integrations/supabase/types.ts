@@ -21,9 +21,12 @@ export type Database = {
           customer_name: string
           customer_notes: string | null
           customer_phone: string
+          deposit_amount: number | null
           employee_id: string
           end_time: string
           id: string
+          payment_method: string | null
+          payment_proof_url: string | null
           price_snapshot: number | null
           qr_token: string
           service_id: string
@@ -37,9 +40,12 @@ export type Database = {
           customer_name: string
           customer_notes?: string | null
           customer_phone: string
+          deposit_amount?: number | null
           employee_id: string
           end_time: string
           id?: string
+          payment_method?: string | null
+          payment_proof_url?: string | null
           price_snapshot?: number | null
           qr_token?: string
           service_id: string
@@ -53,9 +59,12 @@ export type Database = {
           customer_name?: string
           customer_notes?: string | null
           customer_phone?: string
+          deposit_amount?: number | null
           employee_id?: string
           end_time?: string
           id?: string
+          payment_method?: string | null
+          payment_proof_url?: string | null
           price_snapshot?: number | null
           qr_token?: string
           service_id?: string
@@ -90,9 +99,12 @@ export type Database = {
       businesses: {
         Row: {
           address: string | null
+          bank_info: string | null
           category: string | null
           cover_url: string | null
           created_at: string
+          deposit_enabled: boolean
+          deposit_percent: number
           description: string | null
           id: string
           instagram: string | null
@@ -112,9 +124,12 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          bank_info?: string | null
           category?: string | null
           cover_url?: string | null
           created_at?: string
+          deposit_enabled?: boolean
+          deposit_percent?: number
           description?: string | null
           id?: string
           instagram?: string | null
@@ -134,9 +149,12 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          bank_info?: string | null
           category?: string | null
           cover_url?: string | null
           created_at?: string
+          deposit_enabled?: boolean
+          deposit_percent?: number
           description?: string | null
           id?: string
           instagram?: string | null

@@ -7,9 +7,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { Loader2, Upload, Building2, Phone, MessageCircle, Clock, Image as ImageIcon, MapPin, Instagram, Check, Copy } from "lucide-react";
+import { Loader2, Upload, Building2, Phone, MessageCircle, Clock, Image as ImageIcon, MapPin, Instagram, Check, Copy, Wallet, Banknote, Crosshair } from "lucide-react";
 import { toast } from "sonner";
 import { defaultHours, dayKeys, dayLabels, WorkingHours, categories, BusinessCategory } from "@/lib/business";
+import { LocationMap } from "@/components/LocationMap";
 
 const SettingsPage = () => {
   const { business, refresh } = useBusiness();
@@ -26,6 +27,12 @@ const SettingsPage = () => {
   const [hours, setHours] = useState<WorkingHours>(defaultHours);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState<"logo" | "cover" | null>(null);
+  const [lat, setLat] = useState<number>(32.8872);
+  const [lng, setLng] = useState<number>(13.1913);
+  const [hasLocation, setHasLocation] = useState(false);
+  const [depositEnabled, setDepositEnabled] = useState(false);
+  const [depositPercent, setDepositPercent] = useState(25);
+  const [bankInfo, setBankInfo] = useState("");
 
   useEffect(() => {
     if (!business) return;
@@ -39,7 +46,21 @@ const SettingsPage = () => {
     setLogoUrl(business.logo_url);
     setCoverUrl(business.cover_url);
     setHours({ ...defaultHours, ...(business.working_hours || {}) });
+    if (business.latitude != null && business.longitude != null) {
+      setLat(Number(business.latitude)); setLng(Number(business.longitude)); setHasLocation(true);
+    }
+    setDepositEnabled(!!business.deposit_enabled);
+    setDepositPercent(business.deposit_percent ?? 25);
+    setBankInfo(business.bank_info || "");
   }, [business]);
+
+  const useMyLocation = () => {
+    if (!navigator.geolocation) { toast.error("المتصفح لا يدعم تحديد الموقع"); return; }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => { setLat(pos.coords.latitude); setLng(pos.coords.longitude); setHasLocation(true); toast.success("تم التقاط موقعك"); },
+      () => toast.error("تعذر الحصول على الموقع"),
+    );
+  };
 
   const upload = async (file: File, kind: "logo" | "cover") => {
     if (!user || !business) return;
@@ -70,7 +91,12 @@ const SettingsPage = () => {
       logo_url: logoUrl,
       cover_url: coverUrl,
       working_hours: hours as any,
-    }).eq("id", business.id);
+      latitude: hasLocation ? lat : null,
+      longitude: hasLocation ? lng : null,
+      deposit_enabled: depositEnabled,
+      deposit_percent: Math.max(0, Math.min(100, depositPercent || 0)),
+      bank_info: bankInfo.trim() || null,
+    } as any).eq("id", business.id);
     setSaving(false);
     if (error) { toast.error("فشل الحفظ: " + error.message); return; }
     toast.success("✨ تم حفظ كل الإعدادات بنجاح");
@@ -226,7 +252,68 @@ const SettingsPage = () => {
         </div>
       </div>
 
-      {/* Working hours */}
+      {/* Location on Map */}
+      <div className="luxe-card rounded-3xl p-6 space-y-5">
+        <div className="flex items-center gap-3 pb-3 border-b border-border/40">
+          <div className="w-10 h-10 rounded-xl bg-gradient-primary grid place-items-center text-primary-foreground shadow-glow">
+            <MapPin className="w-5 h-5" />
+          </div>
+          <div>
+            <h2 className="font-display font-bold text-lg">موقع المنشأة على الخريطة</h2>
+            <p className="text-xs text-muted-foreground">انقر على الخريطة أو اسحب الدبوس لتحديد الموقع بدقة</p>
+          </div>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Button type="button" variant="outline" size="sm" onClick={useMyLocation}>
+            <Crosshair className="w-4 h-4 ml-1" /> استخدم موقعي الحالي
+          </Button>
+          {hasLocation && (
+            <Button type="button" variant="ghost" size="sm" onClick={() => setHasLocation(false)}>
+              إزالة الموقع
+            </Button>
+          )}
+        </div>
+        <LocationMap lat={lat} lng={lng} interactive onChange={(la, ln) => { setLat(la); setLng(ln); setHasLocation(true); }} height={280} />
+        {hasLocation && (
+          <p className="text-xs text-muted-foreground" dir="ltr">
+            {lat.toFixed(5)}, {lng.toFixed(5)}
+          </p>
+        )}
+      </div>
+
+      {/* Deposit & Payment */}
+      <div className="luxe-card rounded-3xl p-6 space-y-5">
+        <div className="flex items-center gap-3 pb-3 border-b border-border/40">
+          <div className="w-10 h-10 rounded-xl bg-gradient-primary grid place-items-center text-primary-foreground shadow-glow">
+            <Wallet className="w-5 h-5" />
+          </div>
+          <div>
+            <h2 className="font-display font-bold text-lg">العربون وطرق الدفع</h2>
+            <p className="text-xs text-muted-foreground">اطلب من العميل دفع نسبة عند الحجز لتأكيده</p>
+          </div>
+        </div>
+        <div className="flex items-center justify-between p-4 rounded-2xl bg-secondary/40">
+          <div>
+            <p className="font-bold text-sm">تفعيل دفع العربون</p>
+            <p className="text-xs text-muted-foreground">يطلب من العميل اختيار طريقة الدفع وإرسال إيصال</p>
+          </div>
+          <Switch checked={depositEnabled} onCheckedChange={setDepositEnabled} />
+        </div>
+        {depositEnabled && (
+          <div className="grid sm:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>نسبة العربون (%)</Label>
+              <Input type="number" min={5} max={100} value={depositPercent} onChange={(e) => setDepositPercent(Number(e.target.value))} className="h-11" />
+            </div>
+            <div className="space-y-2 sm:col-span-2">
+              <Label className="flex items-center gap-1.5"><Banknote className="w-3.5 h-3.5" /> بيانات الحساب البنكي للتحويل</Label>
+              <Textarea rows={3} value={bankInfo} onChange={(e) => setBankInfo(e.target.value)} maxLength={500} placeholder="مصرف الجمهورية - رقم الحساب: 0000000000 - باسم: ..." />
+              <p className="text-xs text-muted-foreground">ستظهر هذه البيانات للعميل عند اختيار التحويل المصرفي.</p>
+            </div>
+          </div>
+        )}
+      </div>
+
       <div className="luxe-card rounded-3xl p-6 space-y-5">
         <div className="flex items-center gap-3 pb-3 border-b border-border/40">
           <div className="w-10 h-10 rounded-xl bg-gradient-primary grid place-items-center text-primary-foreground shadow-glow">

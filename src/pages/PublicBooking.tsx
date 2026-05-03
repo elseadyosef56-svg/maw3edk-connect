@@ -7,7 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Loader2, Phone, Clock, Check, Calendar as CalendarIcon, ArrowRight,
-  Sparkles, MessageCircle, MapPin, Instagram, Star, Shield, Award
+  Sparkles, MessageCircle, MapPin, Instagram, Star, Shield, Award,
+  Banknote, Wallet, Upload
 } from "lucide-react";
 import { toast } from "sonner";
 import { addDays, addMinutes, format, isAfter, isBefore, startOfDay } from "date-fns";
@@ -16,6 +17,7 @@ import {
   dayKeys, defaultHours, WorkingHours, getCategoryConfig,
   buildWhatsAppLink, formatBookingMessage
 } from "@/lib/business";
+import { LocationMap } from "@/components/LocationMap";
 
 interface Biz {
   id: string; name: string; slug: string; category: string | null;
@@ -23,6 +25,8 @@ interface Biz {
   address: string | null; description: string | null; instagram: string | null;
   logo_url: string | null; cover_url: string | null;
   working_hours: any; status: string;
+  latitude: number | null; longitude: number | null;
+  deposit_enabled: boolean; deposit_percent: number; bank_info: string | null;
 }
 interface Service { id: string; name: string; description: string | null; price: number; duration_minutes: number; }
 interface Employee { id: string; name: string; service_ids: string[]; image_url: string | null; }
@@ -76,6 +80,8 @@ const PublicBooking = () => {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [notes, setNotes] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState<"cash" | "transfer">("cash");
+  const [proofFile, setProofFile] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
   const [whatsappLink, setWhatsappLink] = useState<string>("");
@@ -86,7 +92,7 @@ const PublicBooking = () => {
     if (!slug) return;
     (async () => {
       const { data: b } = await supabase.from("businesses")
-        .select("id, name, slug, category, phone, whatsapp_number, address, description, instagram, logo_url, cover_url, working_hours, status")
+        .select("id, name, slug, category, phone, whatsapp_number, address, description, instagram, logo_url, cover_url, working_hours, status, latitude, longitude, deposit_enabled, deposit_percent, bank_info")
         .eq("slug", slug).maybeSingle();
       if (!b) { setLoading(false); return; }
       setBiz(b as Biz);
@@ -156,6 +162,19 @@ const PublicBooking = () => {
     setSubmitting(true);
     const start_time = slot.toISOString();
     const end_time = addMinutes(slot, service.duration_minutes).toISOString();
+    const depositAmount = biz.deposit_enabled
+      ? Math.round(((service.price || 0) * (biz.deposit_percent || 25) / 100) * 100) / 100
+      : null;
+
+    let proofUrl: string | null = null;
+    if (biz.deposit_enabled && paymentMethod === "transfer" && proofFile) {
+      const ext = proofFile.name.split(".").pop();
+      const path = `${biz.id}/${Date.now()}.${ext}`;
+      const up = await supabase.storage.from("payment-proofs").upload(path, proofFile);
+      if (up.error) { toast.error("فشل رفع الإيصال: " + up.error.message); setSubmitting(false); return; }
+      proofUrl = supabase.storage.from("payment-proofs").getPublicUrl(path).data.publicUrl;
+    }
+
     const { data, error } = await supabase.from("bookings").insert({
       business_id: biz.id,
       service_id: service.id,
@@ -165,7 +184,10 @@ const PublicBooking = () => {
       customer_notes: notes.trim() || null,
       start_time, end_time,
       price_snapshot: service.price,
-    }).select("qr_token").maybeSingle();
+      payment_method: biz.deposit_enabled ? paymentMethod : null,
+      deposit_amount: depositAmount,
+      payment_proof_url: proofUrl,
+    } as any).select("qr_token").maybeSingle();
     setSubmitting(false);
     if (error) { toast.error(error.message); return; }
 
@@ -314,7 +336,20 @@ const PublicBooking = () => {
           </div>
         </div>
 
-        {/* Active promotions banner */}
+        {/* Map */}
+        {biz.latitude != null && biz.longitude != null && (
+          <div className="mb-5 rounded-3xl overflow-hidden border-2 border-border/50 shadow-md">
+            <LocationMap lat={Number(biz.latitude)} lng={Number(biz.longitude)} label={biz.name} height={200} />
+            <a
+              href={`https://www.google.com/maps/dir/?api=1&destination=${biz.latitude},${biz.longitude}`}
+              target="_blank" rel="noopener noreferrer"
+              className="flex items-center justify-center gap-2 py-2.5 text-sm font-bold text-primary bg-card hover:bg-secondary transition-colors"
+            >
+              <MapPin className="w-4 h-4" /> فتح الاتجاهات في خرائط Google
+            </a>
+          </div>
+        )}
+
         {promos.length > 0 && (
           <div className="mb-5 space-y-2">
             {promos.map(p => (
@@ -479,7 +514,47 @@ const PublicBooking = () => {
               <div className="flex justify-between gap-2"><span className="text-muted-foreground shrink-0">{cfg.staffSingular}</span><span className="font-bold">{employee?.name}</span></div>
               <div className="flex justify-between gap-2"><span className="text-muted-foreground shrink-0">الموعد</span><span className="font-bold text-left text-xs sm:text-sm">{slot && format(slot, "EEEE d MMM HH:mm", { locale: ar })}</span></div>
               <div className="flex justify-between gap-2 pt-2 border-t border-primary/20"><span className="text-muted-foreground shrink-0">السعر الإجمالي</span><span className="font-display font-extrabold text-lg text-primary">{service?.price} د.ل</span></div>
+              {biz.deposit_enabled && service && (
+                <div className="flex justify-between gap-2 text-amber-600 dark:text-amber-400">
+                  <span className="shrink-0">العربون المطلوب ({biz.deposit_percent}%)</span>
+                  <span className="font-display font-extrabold">{Math.round((service.price * biz.deposit_percent / 100) * 100) / 100} د.ل</span>
+                </div>
+              )}
             </div>
+
+            {biz.deposit_enabled && (
+              <div className="rounded-2xl border-2 border-amber-300/40 bg-amber-50/50 dark:bg-amber-950/20 p-4 space-y-3">
+                <div className="flex items-center gap-2">
+                  <Wallet className="w-4 h-4 text-amber-600" />
+                  <h3 className="font-bold text-sm">طريقة الدفع</h3>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <button type="button" onClick={() => setPaymentMethod("cash")}
+                    className={`p-3 rounded-xl border-2 text-center transition-all ${paymentMethod === "cash" ? "border-primary bg-primary/10 shadow-glow" : "border-border bg-card hover:border-primary/40"}`}>
+                    <Banknote className="w-5 h-5 mx-auto mb-1" />
+                    <p className="text-xs font-bold">كاش عند الوصول</p>
+                  </button>
+                  <button type="button" onClick={() => setPaymentMethod("transfer")}
+                    className={`p-3 rounded-xl border-2 text-center transition-all ${paymentMethod === "transfer" ? "border-primary bg-primary/10 shadow-glow" : "border-border bg-card hover:border-primary/40"}`}>
+                    <Wallet className="w-5 h-5 mx-auto mb-1" />
+                    <p className="text-xs font-bold">تحويل مصرفي</p>
+                  </button>
+                </div>
+                {paymentMethod === "transfer" && (
+                  <div className="space-y-2">
+                    {biz.bank_info && (
+                      <div className="text-xs whitespace-pre-wrap p-3 rounded-xl bg-card border border-border leading-relaxed">{biz.bank_info}</div>
+                    )}
+                    <Label className="text-xs font-bold">رفع إيصال التحويل (اختياري)</Label>
+                    <label className="flex items-center justify-center gap-2 h-11 rounded-xl border-2 border-dashed border-border bg-card cursor-pointer hover:border-primary/40">
+                      <input type="file" accept="image/*" className="hidden" onChange={(e) => setProofFile(e.target.files?.[0] || null)} />
+                      <Upload className="w-4 h-4" />
+                      <span className="text-xs">{proofFile ? proofFile.name : "اختر صورة الإيصال"}</span>
+                    </label>
+                  </div>
+                )}
+              </div>
+            )}
 
             <div className="space-y-3">
               <div className="space-y-1.5">
