@@ -112,9 +112,9 @@ const AdminLogin = () => {
 
           <form onSubmit={handleLogin} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="ae" className="text-white/80">البريد الإلكتروني</Label>
-              <Input id="ae" type="email" value={email} onChange={(e) => setEmail(e.target.value)} dir="ltr" required
-                placeholder={OWNER_EMAIL}
+              <Label htmlFor="ae" className="text-white/80">البريد الإلكتروني أو اسم المستخدم</Label>
+              <Input id="ae" type="text" value={email} onChange={(e) => setEmail(e.target.value)} dir="ltr" required
+                placeholder="admin"
                 className="h-11 bg-white/5 border-white/10 text-white placeholder:text-white/30" />
             </div>
             <div className="space-y-2">
