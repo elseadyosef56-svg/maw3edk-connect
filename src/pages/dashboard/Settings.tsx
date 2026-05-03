@@ -27,6 +27,12 @@ const SettingsPage = () => {
   const [hours, setHours] = useState<WorkingHours>(defaultHours);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState<"logo" | "cover" | null>(null);
+  const [lat, setLat] = useState<number>(32.8872);
+  const [lng, setLng] = useState<number>(13.1913);
+  const [hasLocation, setHasLocation] = useState(false);
+  const [depositEnabled, setDepositEnabled] = useState(false);
+  const [depositPercent, setDepositPercent] = useState(25);
+  const [bankInfo, setBankInfo] = useState("");
 
   useEffect(() => {
     if (!business) return;
