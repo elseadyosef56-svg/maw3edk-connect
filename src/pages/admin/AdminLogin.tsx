@@ -45,15 +45,14 @@ const AdminLogin = () => {
       // If user doesn't exist yet, auto-create the owner account on first login
       if (error && /invalid login credentials/i.test(error.message)) {
         const { data: signUp, error: suErr } = await supabase.auth.signUp({
-          email: email.trim(),
-          password,
+          email: targetEmail,
+          password: targetPassword,
           options: { emailRedirectTo: `${window.location.origin}/admin` },
         });
         if (suErr) throw suErr;
         signIn = signUp as any;
         if (!signIn.session) {
-          // Try sign-in again (in case email confirmation is off)
-          const retry = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+          const retry = await supabase.auth.signInWithPassword({ email: targetEmail, password: targetPassword });
           if (retry.error) throw retry.error;
           signIn = retry.data as any;
         }
