@@ -7,7 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Loader2, Phone, Clock, Check, Calendar as CalendarIcon, ArrowRight,
-  Sparkles, MessageCircle, MapPin, Instagram, Star, Shield, Award
+  Sparkles, MessageCircle, MapPin, Instagram, Star, Shield, Award,
+  Banknote, Wallet, Upload
 } from "lucide-react";
 import { toast } from "sonner";
 import { addDays, addMinutes, format, isAfter, isBefore, startOfDay } from "date-fns";
@@ -16,6 +17,7 @@ import {
   dayKeys, defaultHours, WorkingHours, getCategoryConfig,
   buildWhatsAppLink, formatBookingMessage
 } from "@/lib/business";
+import { LocationMap } from "@/components/LocationMap";
 
 interface Biz {
   id: string; name: string; slug: string; category: string | null;
