@@ -514,7 +514,47 @@ const PublicBooking = () => {
               <div className="flex justify-between gap-2"><span className="text-muted-foreground shrink-0">{cfg.staffSingular}</span><span className="font-bold">{employee?.name}</span></div>
               <div className="flex justify-between gap-2"><span className="text-muted-foreground shrink-0">الموعد</span><span className="font-bold text-left text-xs sm:text-sm">{slot && format(slot, "EEEE d MMM HH:mm", { locale: ar })}</span></div>
               <div className="flex justify-between gap-2 pt-2 border-t border-primary/20"><span className="text-muted-foreground shrink-0">السعر الإجمالي</span><span className="font-display font-extrabold text-lg text-primary">{service?.price} د.ل</span></div>
+              {biz.deposit_enabled && service && (
+                <div className="flex justify-between gap-2 text-amber-600 dark:text-amber-400">
+                  <span className="shrink-0">العربون المطلوب ({biz.deposit_percent}%)</span>
+                  <span className="font-display font-extrabold">{Math.round((service.price * biz.deposit_percent / 100) * 100) / 100} د.ل</span>
+                </div>
+              )}
             </div>
+
+            {biz.deposit_enabled && (
+              <div className="rounded-2xl border-2 border-amber-300/40 bg-amber-50/50 dark:bg-amber-950/20 p-4 space-y-3">
+                <div className="flex items-center gap-2">
+                  <Wallet className="w-4 h-4 text-amber-600" />
+                  <h3 className="font-bold text-sm">طريقة الدفع</h3>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <button type="button" onClick={() => setPaymentMethod("cash")}
+                    className={`p-3 rounded-xl border-2 text-center transition-all ${paymentMethod === "cash" ? "border-primary bg-primary/10 shadow-glow" : "border-border bg-card hover:border-primary/40"}`}>
+                    <Banknote className="w-5 h-5 mx-auto mb-1" />
+                    <p className="text-xs font-bold">كاش عند الوصول</p>
+                  </button>
+                  <button type="button" onClick={() => setPaymentMethod("transfer")}
+                    className={`p-3 rounded-xl border-2 text-center transition-all ${paymentMethod === "transfer" ? "border-primary bg-primary/10 shadow-glow" : "border-border bg-card hover:border-primary/40"}`}>
+                    <Wallet className="w-5 h-5 mx-auto mb-1" />
+                    <p className="text-xs font-bold">تحويل مصرفي</p>
+                  </button>
+                </div>
+                {paymentMethod === "transfer" && (
+                  <div className="space-y-2">
+                    {biz.bank_info && (
+                      <div className="text-xs whitespace-pre-wrap p-3 rounded-xl bg-card border border-border leading-relaxed">{biz.bank_info}</div>
+                    )}
+                    <Label className="text-xs font-bold">رفع إيصال التحويل (اختياري)</Label>
+                    <label className="flex items-center justify-center gap-2 h-11 rounded-xl border-2 border-dashed border-border bg-card cursor-pointer hover:border-primary/40">
+                      <input type="file" accept="image/*" className="hidden" onChange={(e) => setProofFile(e.target.files?.[0] || null)} />
+                      <Upload className="w-4 h-4" />
+                      <span className="text-xs">{proofFile ? proofFile.name : "اختر صورة الإيصال"}</span>
+                    </label>
+                  </div>
+                )}
+              </div>
+            )}
 
             <div className="space-y-3">
               <div className="space-y-1.5">
