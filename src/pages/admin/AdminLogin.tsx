@@ -129,7 +129,7 @@ const AdminLogin = () => {
             </Button>
 
             <p className="text-[11px] text-white/50 text-center leading-relaxed">
-              في أول دخول، سيُنشأ الحساب تلقائياً ويُرتبط بصلاحيات المالك.
+              يدخل المالك بإيميله أو باستخدام اسم المستخدم <span dir="ltr" className="font-mono text-amber-300">admin</span>.
             </p>
           </form>
         </div>
