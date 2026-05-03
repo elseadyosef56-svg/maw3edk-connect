@@ -73,7 +73,7 @@ const Overview = () => {
           )}
         </div>
 
-        <div className="mt-6 relative overflow-hidden rounded-3xl p-5 sm:p-6 bg-gradient-to-br from-primary via-primary-deep to-purple-700 text-primary-foreground shadow-glow">
+        <div className="mt-6 relative overflow-hidden rounded-3xl p-5 sm:p-6 bg-gradient-to-br from-primary via-primary/90 to-purple-700 text-primary-foreground shadow-glow">
           <div className="absolute -top-10 -left-10 w-40 h-40 bg-white/10 rounded-full blur-3xl pointer-events-none" />
           <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-amber-300/20 rounded-full blur-3xl pointer-events-none" />
           <div className="relative flex flex-wrap items-center gap-4">
