@@ -46,7 +46,21 @@ const SettingsPage = () => {
     setLogoUrl(business.logo_url);
     setCoverUrl(business.cover_url);
     setHours({ ...defaultHours, ...(business.working_hours || {}) });
+    if (business.latitude != null && business.longitude != null) {
+      setLat(Number(business.latitude)); setLng(Number(business.longitude)); setHasLocation(true);
+    }
+    setDepositEnabled(!!business.deposit_enabled);
+    setDepositPercent(business.deposit_percent ?? 25);
+    setBankInfo(business.bank_info || "");
   }, [business]);
+
+  const useMyLocation = () => {
+    if (!navigator.geolocation) { toast.error("المتصفح لا يدعم تحديد الموقع"); return; }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => { setLat(pos.coords.latitude); setLng(pos.coords.longitude); setHasLocation(true); toast.success("تم التقاط موقعك"); },
+      () => toast.error("تعذر الحصول على الموقع"),
+    );
+  };
 
   const upload = async (file: File, kind: "logo" | "cover") => {
     if (!user || !business) return;
