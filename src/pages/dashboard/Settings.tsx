@@ -91,7 +91,12 @@ const SettingsPage = () => {
       logo_url: logoUrl,
       cover_url: coverUrl,
       working_hours: hours as any,
-    }).eq("id", business.id);
+      latitude: hasLocation ? lat : null,
+      longitude: hasLocation ? lng : null,
+      deposit_enabled: depositEnabled,
+      deposit_percent: Math.max(0, Math.min(100, depositPercent || 0)),
+      bank_info: bankInfo.trim() || null,
+    } as any).eq("id", business.id);
     setSaving(false);
     if (error) { toast.error("فشل الحفظ: " + error.message); return; }
     toast.success("✨ تم حفظ كل الإعدادات بنجاح");
