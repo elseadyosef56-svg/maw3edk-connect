@@ -16,6 +16,11 @@ export interface BusinessRecord {
   status: "trial" | "active" | "expired" | "suspended";
   trial_end_date: string;
   onboarded: boolean;
+  latitude?: number | null;
+  longitude?: number | null;
+  deposit_enabled?: boolean;
+  deposit_percent?: number;
+  bank_info?: string | null;
 }
 
 export const fetchMyBusiness = async (userId: string): Promise<BusinessRecord | null> => {
