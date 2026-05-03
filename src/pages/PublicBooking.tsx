@@ -23,6 +23,8 @@ interface Biz {
   address: string | null; description: string | null; instagram: string | null;
   logo_url: string | null; cover_url: string | null;
   working_hours: any; status: string;
+  latitude: number | null; longitude: number | null;
+  deposit_enabled: boolean; deposit_percent: number; bank_info: string | null;
 }
 interface Service { id: string; name: string; description: string | null; price: number; duration_minutes: number; }
 interface Employee { id: string; name: string; service_ids: string[]; image_url: string | null; }
