@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { Loader2, Upload, Building2, Phone, MessageCircle, Clock, Image as ImageIcon, MapPin, Instagram, Check, Copy, Wallet, Banknote, Crosshair } from "lucide-react";
+import { Loader2, Upload, Building2, Phone, MessageCircle, Clock, Image as ImageIcon, MapPin, Instagram, Check, Copy, Wallet, Banknote, Crosshair, Link as LinkIcon } from "lucide-react";
 import { toast } from "sonner";
 import { defaultHours, dayKeys, dayLabels, WorkingHours, categories, BusinessCategory } from "@/lib/business";
 import { LocationMap } from "@/components/LocationMap";
@@ -16,6 +16,9 @@ const SettingsPage = () => {
   const { business, refresh } = useBusiness();
   const { user } = useAuth();
   const [name, setName] = useState("");
+  const [slug, setSlug] = useState("");
+  const [slugChecking, setSlugChecking] = useState(false);
+  const [slugAvailable, setSlugAvailable] = useState<boolean | null>(null);
   const [category, setCategory] = useState<BusinessCategory | "">("");
   const [phone, setPhone] = useState("");
   const [whatsapp, setWhatsapp] = useState("");
@@ -37,6 +40,7 @@ const SettingsPage = () => {
   useEffect(() => {
     if (!business) return;
     setName(business.name);
+    setSlug(business.slug);
     setCategory((business.category as BusinessCategory) || "");
     setPhone(business.phone || "");
     setWhatsapp(business.whatsapp_number || "");
@@ -53,6 +57,26 @@ const SettingsPage = () => {
     setDepositPercent(business.deposit_percent ?? 25);
     setBankInfo(business.bank_info || "");
   }, [business]);
+
+  // Slug validation
+  const sanitizeSlug = (v: string) =>
+    v.toLowerCase().trim()
+      .replace(/[^a-z0-9-]+/g, "-")
+      .replace(/-+/g, "-")
+      .replace(/^-|-$/g, "")
+      .slice(0, 30);
+
+  useEffect(() => {
+    if (!business || !slug || slug === business.slug) { setSlugAvailable(null); return; }
+    if (slug.length < 3) { setSlugAvailable(false); return; }
+    let cancel = false;
+    setSlugChecking(true);
+    const t = setTimeout(async () => {
+      const { data } = await supabase.from("businesses").select("id").eq("slug", slug).maybeSingle();
+      if (!cancel) { setSlugAvailable(!data); setSlugChecking(false); }
+    }, 400);
+    return () => { cancel = true; clearTimeout(t); };
+  }, [slug, business]);
 
   const useMyLocation = () => {
     if (!navigator.geolocation) { toast.error("المتصفح لا يدعم تحديد الموقع"); return; }
@@ -79,9 +103,14 @@ const SettingsPage = () => {
   const save = async () => {
     if (!business) return;
     if (!name.trim()) { toast.error("اسم المنشأة مطلوب"); return; }
+    if (slug !== business.slug) {
+      if (slug.length < 3) { toast.error("الرابط قصير جداً (3 أحرف على الأقل)"); return; }
+      if (slugAvailable === false) { toast.error("هذا الرابط غير متاح"); return; }
+    }
     setSaving(true);
     const { error } = await supabase.from("businesses").update({
       name: name.trim(),
+      slug: slug || business.slug,
       category: category || null,
       phone: phone.trim() || null,
       whatsapp_number: whatsapp.trim() || null,
@@ -103,7 +132,7 @@ const SettingsPage = () => {
     await refresh();
   };
 
-  const publicUrl = `${window.location.origin}/${business?.slug || ""}`;
+  const publicUrl = `${window.location.origin}/${slug || business?.slug || ""}`;
 
   return (
     <div className="space-y-6 animate-fade-in max-w-4xl">
@@ -195,14 +224,37 @@ const SettingsPage = () => {
             <Label className="flex items-center gap-1.5"><Instagram className="w-3.5 h-3.5 text-primary" /> الإنستغرام</Label>
             <Input value={instagram} onChange={(e) => setInstagram(e.target.value)} dir="ltr" placeholder="username" className="h-11" />
           </div>
-          <div className="space-y-2">
-            <Label>الرابط العام</Label>
-            <div className="flex gap-2">
-              <Input value={publicUrl} disabled dir="ltr" className="h-11" />
+          <div className="space-y-2 sm:col-span-2 p-4 rounded-2xl bg-gradient-to-br from-primary/5 to-accent/5 border-2 border-primary/20">
+            <Label className="text-base font-bold flex items-center gap-2">
+              <LinkIcon className="w-4 h-4 text-primary" /> رابط الحجز المخصص
+            </Label>
+            <div className="flex gap-2 items-stretch">
+              <div className="flex items-center px-3 rounded-xl bg-secondary text-xs text-muted-foreground shrink-0" dir="ltr">
+                {window.location.host}/
+              </div>
+              <Input
+                value={slug}
+                onChange={(e) => setSlug(sanitizeSlug(e.target.value))}
+                dir="ltr"
+                placeholder="my-clinic"
+                maxLength={30}
+                className="h-11 font-mono font-bold flex-1"
+              />
               <Button variant="outline" size="icon" className="h-11 w-11 shrink-0" onClick={() => { navigator.clipboard.writeText(publicUrl); toast.success("تم النسخ"); }}>
                 <Copy className="w-4 h-4" />
               </Button>
             </div>
+            <div className="flex items-center justify-between gap-2 flex-wrap">
+              <p className="text-[11px] text-muted-foreground" dir="ltr">{publicUrl}</p>
+              {slug !== business?.slug && (
+                slugChecking ? <span className="text-[11px] text-muted-foreground">جاري التحقق…</span> :
+                slugAvailable === true ? <span className="text-[11px] text-emerald-600 font-bold">✓ متاح</span> :
+                slugAvailable === false ? <span className="text-[11px] text-rose-500 font-bold">✗ غير متاح</span> : null
+              )}
+            </div>
+            <p className="text-[11px] text-muted-foreground leading-relaxed">
+              استخدم اسم قصير وسهل (أحرف إنجليزية، أرقام، شرطات). مثال: <span dir="ltr" className="font-mono">noor-clinic</span>
+            </p>
           </div>
         </div>
       </div>

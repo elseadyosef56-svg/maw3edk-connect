@@ -291,10 +291,10 @@ const Billing = () => {
               <Label className="font-bold">الباقة</Label>
               <RadioGroup value={plan} onValueChange={(v) => setPlan(v as any)} className="grid grid-cols-3 gap-2">
                 {plans.map(p => (
-                  <label key={p.id} className={`flex flex-col items-center gap-1 p-3 rounded-2xl border-2 cursor-pointer transition-all ${plan === p.id ? "border-primary bg-primary/10 shadow-glow" : "border-border hover:border-primary/40"}`}>
+                  <label key={p.id} className={`flex flex-col items-center gap-0.5 p-2.5 rounded-2xl border-2 cursor-pointer transition-all min-w-0 ${plan === p.id ? "border-primary bg-primary/10 shadow-glow" : "border-border hover:border-primary/40"}`}>
                     <RadioGroupItem value={p.id} className="sr-only" />
-                    <span className="font-bold text-sm">{p.name}</span>
-                    <span className="text-xs text-muted-foreground">{p.price} د.ل</span>
+                    <span className="font-bold text-xs sm:text-sm truncate w-full text-center">{p.name}</span>
+                    <span className="text-[10px] sm:text-xs text-muted-foreground">{p.price} د.ل</span>
                   </label>
                 ))}
               </RadioGroup>
@@ -306,10 +306,10 @@ const Billing = () => {
                 {paymentMethods.map(m => {
                   const Icon = m.icon;
                   return (
-                    <label key={m.v} className={`flex items-center gap-2 p-3 rounded-2xl border-2 cursor-pointer transition-all ${method === m.v ? "border-primary bg-primary/10" : "border-border hover:border-primary/40"}`}>
+                    <label key={m.v} className={`flex items-center gap-2 p-3 rounded-2xl border-2 cursor-pointer transition-all min-w-0 ${method === m.v ? "border-primary bg-primary/10" : "border-border hover:border-primary/40"}`}>
                       <RadioGroupItem value={m.v} className="sr-only" />
                       <Icon className="w-4 h-4 text-primary shrink-0" />
-                      <span className="text-xs font-bold">{m.l}</span>
+                      <span className="text-[11px] sm:text-xs font-bold truncate flex-1 min-w-0">{m.l}</span>
                     </label>
                   );
                 })}

@@ -3,11 +3,12 @@ import { useBusiness } from "@/contexts/BusinessContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Loader2, ChevronRight, ChevronLeft, Calendar as CalendarIcon, Phone, User, QrCode, X } from "lucide-react";
+import { Loader2, ChevronRight, ChevronLeft, Calendar as CalendarIcon, Phone, User, QrCode, X, MessageCircle, Bell } from "lucide-react";
 import { toast } from "sonner";
 import { QRCodeSVG } from "qrcode.react";
-import { format, addDays, startOfDay, endOfDay, isSameDay } from "date-fns";
+import { format, addDays, startOfDay, endOfDay, isSameDay, differenceInMinutes } from "date-fns";
 import { ar } from "date-fns/locale";
+import { buildWhatsAppLink } from "@/lib/business";
 
 interface Booking {
   id: string; customer_name: string; customer_phone: string; customer_notes: string | null;
@@ -105,11 +106,13 @@ const CalendarPage = () => {
         <div className="space-y-3">
           {bookings.map((b) => {
             const st = statusLabels[b.status] || statusLabels.confirmed;
+            const minsUntil = differenceInMinutes(new Date(b.start_time), new Date());
+            const dueSoon = minsUntil > 0 && minsUntil <= 150 && b.status !== "cancelled" && b.status !== "no_show" && b.status !== "completed";
             return (
               <button
                 key={b.id}
                 onClick={() => setSelected(b)}
-                className="glass w-full rounded-2xl p-4 flex items-center gap-4 text-right hover:-translate-y-0.5 transition-transform"
+                className={`glass w-full rounded-2xl p-4 flex items-center gap-4 text-right hover:-translate-y-0.5 transition-transform ${dueSoon ? "ring-2 ring-amber-400/60" : ""}`}
               >
                 <div className="w-16 text-center shrink-0">
                   <p className="text-lg font-display font-bold text-primary">{format(new Date(b.start_time), "HH:mm")}</p>
@@ -121,7 +124,14 @@ const CalendarPage = () => {
                     {services[b.service_id] || "-"} • {employees[b.employee_id] || "-"}
                   </p>
                 </div>
-                <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${st.color}`}>{st.label}</span>
+                <div className="flex flex-col items-end gap-1">
+                  <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${st.color}`}>{st.label}</span>
+                  {dueSoon && (
+                    <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-amber-500/20 text-amber-700 dark:text-amber-300 inline-flex items-center gap-1">
+                      <Bell className="w-2.5 h-2.5" /> ذكّر الآن
+                    </span>
+                  )}
+                </div>
               </button>
             );
           })}
@@ -169,6 +179,20 @@ const CalendarPage = () => {
                 <QRCodeSVG value={`${window.location.origin}/checkin/${selected.qr_token}`} size={128} />
                 <p className="text-xs text-muted-foreground flex items-center gap-1"><QrCode className="w-3 h-3" /> امسح للتحقق من الحضور</p>
               </div>
+
+              {(() => {
+                const reminderMsg = `🔔 تذكير ودّي\nموعدك في *${business?.name || ""}* اليوم الساعة ${format(new Date(selected.start_time), "HH:mm")}\nالخدمة: ${services[selected.service_id] || ""}\nنراك قريباً 🌹`;
+                const link = buildWhatsAppLink(selected.customer_phone, reminderMsg);
+                return link ? (
+                  <Button asChild className="w-full bg-[#25D366] hover:bg-[#1eb158] text-white h-11">
+                    <a href={link} target="_blank" rel="noopener noreferrer">
+                      <MessageCircle className="w-4 h-4 ml-2" />
+                      إرسال تذكير واتساب للعميل
+                    </a>
+                  </Button>
+                ) : null;
+              })()}
+
               <div className="grid grid-cols-2 gap-2">
                 <Button variant="outline" onClick={() => updateStatus(selected.id, "arrived")}>تم الحضور</Button>
                 <Button variant="outline" onClick={() => updateStatus(selected.id, "completed")}>تم الإنجاز</Button>
