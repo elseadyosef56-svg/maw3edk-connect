@@ -179,6 +179,20 @@ const CalendarPage = () => {
                 <QRCodeSVG value={`${window.location.origin}/checkin/${selected.qr_token}`} size={128} />
                 <p className="text-xs text-muted-foreground flex items-center gap-1"><QrCode className="w-3 h-3" /> امسح للتحقق من الحضور</p>
               </div>
+
+              {(() => {
+                const reminderMsg = `🔔 تذكير ودّي\nموعدك في *${business?.name || ""}* اليوم الساعة ${format(new Date(selected.start_time), "HH:mm")}\nالخدمة: ${services[selected.service_id] || ""}\nنراك قريباً 🌹`;
+                const link = buildWhatsAppLink(selected.customer_phone, reminderMsg);
+                return link ? (
+                  <Button asChild className="w-full bg-[#25D366] hover:bg-[#1eb158] text-white h-11">
+                    <a href={link} target="_blank" rel="noopener noreferrer">
+                      <MessageCircle className="w-4 h-4 ml-2" />
+                      إرسال تذكير واتساب للعميل
+                    </a>
+                  </Button>
+                ) : null;
+              })()}
+
               <div className="grid grid-cols-2 gap-2">
                 <Button variant="outline" onClick={() => updateStatus(selected.id, "arrived")}>تم الحضور</Button>
                 <Button variant="outline" onClick={() => updateStatus(selected.id, "completed")}>تم الإنجاز</Button>
