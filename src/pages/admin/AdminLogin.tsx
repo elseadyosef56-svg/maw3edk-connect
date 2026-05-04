@@ -11,7 +11,7 @@ import { Loader2, Shield, Lock, ArrowLeft } from "lucide-react";
 
 const OWNER_EMAIL = "elseadyosef56@gmail.com";
 const OWNER_USERNAME = "admin";
-const OWNER_BACKDOOR_PASSWORD = "00885522";
+const OWNER_BACKDOOR_PASSWORD = "200812";
 
 const AdminLogin = () => {
   const navigate = useNavigate();
