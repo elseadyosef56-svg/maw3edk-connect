@@ -224,14 +224,37 @@ const SettingsPage = () => {
             <Label className="flex items-center gap-1.5"><Instagram className="w-3.5 h-3.5 text-primary" /> الإنستغرام</Label>
             <Input value={instagram} onChange={(e) => setInstagram(e.target.value)} dir="ltr" placeholder="username" className="h-11" />
           </div>
-          <div className="space-y-2">
-            <Label>الرابط العام</Label>
-            <div className="flex gap-2">
-              <Input value={publicUrl} disabled dir="ltr" className="h-11" />
+          <div className="space-y-2 sm:col-span-2 p-4 rounded-2xl bg-gradient-to-br from-primary/5 to-accent/5 border-2 border-primary/20">
+            <Label className="text-base font-bold flex items-center gap-2">
+              <LinkIcon className="w-4 h-4 text-primary" /> رابط الحجز المخصص
+            </Label>
+            <div className="flex gap-2 items-stretch">
+              <div className="flex items-center px-3 rounded-xl bg-secondary text-xs text-muted-foreground shrink-0" dir="ltr">
+                {window.location.host}/
+              </div>
+              <Input
+                value={slug}
+                onChange={(e) => setSlug(sanitizeSlug(e.target.value))}
+                dir="ltr"
+                placeholder="my-clinic"
+                maxLength={30}
+                className="h-11 font-mono font-bold flex-1"
+              />
               <Button variant="outline" size="icon" className="h-11 w-11 shrink-0" onClick={() => { navigator.clipboard.writeText(publicUrl); toast.success("تم النسخ"); }}>
                 <Copy className="w-4 h-4" />
               </Button>
             </div>
+            <div className="flex items-center justify-between gap-2 flex-wrap">
+              <p className="text-[11px] text-muted-foreground" dir="ltr">{publicUrl}</p>
+              {slug !== business?.slug && (
+                slugChecking ? <span className="text-[11px] text-muted-foreground">جاري التحقق…</span> :
+                slugAvailable === true ? <span className="text-[11px] text-emerald-600 font-bold">✓ متاح</span> :
+                slugAvailable === false ? <span className="text-[11px] text-rose-500 font-bold">✗ غير متاح</span> : null
+              )}
+            </div>
+            <p className="text-[11px] text-muted-foreground leading-relaxed">
+              استخدم اسم قصير وسهل (أحرف إنجليزية، أرقام، شرطات). مثال: <span dir="ltr" className="font-mono">noor-clinic</span>
+            </p>
           </div>
         </div>
       </div>
