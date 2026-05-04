@@ -103,9 +103,14 @@ const SettingsPage = () => {
   const save = async () => {
     if (!business) return;
     if (!name.trim()) { toast.error("اسم المنشأة مطلوب"); return; }
+    if (slug !== business.slug) {
+      if (slug.length < 3) { toast.error("الرابط قصير جداً (3 أحرف على الأقل)"); return; }
+      if (slugAvailable === false) { toast.error("هذا الرابط غير متاح"); return; }
+    }
     setSaving(true);
     const { error } = await supabase.from("businesses").update({
       name: name.trim(),
+      slug: slug || business.slug,
       category: category || null,
       phone: phone.trim() || null,
       whatsapp_number: whatsapp.trim() || null,
@@ -127,7 +132,7 @@ const SettingsPage = () => {
     await refresh();
   };
 
-  const publicUrl = `${window.location.origin}/${business?.slug || ""}`;
+  const publicUrl = `${window.location.origin}/${slug || business?.slug || ""}`;
 
   return (
     <div className="space-y-6 animate-fade-in max-w-4xl">
