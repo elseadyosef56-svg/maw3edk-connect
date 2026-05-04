@@ -139,7 +139,7 @@ const AdminLogin = () => {
             </Button>
 
             <p className="text-[11px] text-white/50 text-center leading-relaxed">
-              يدخل المالك بإيميله أو باستخدام اسم المستخدم <span dir="ltr" className="font-mono text-amber-300">admin</span>.
+              دخول حصري لمالك المنصة بالإيميل المعتمد فقط.
             </p>
           </form>
         </div>
