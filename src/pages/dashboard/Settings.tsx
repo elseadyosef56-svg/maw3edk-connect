@@ -16,6 +16,9 @@ const SettingsPage = () => {
   const { business, refresh } = useBusiness();
   const { user } = useAuth();
   const [name, setName] = useState("");
+  const [slug, setSlug] = useState("");
+  const [slugChecking, setSlugChecking] = useState(false);
+  const [slugAvailable, setSlugAvailable] = useState<boolean | null>(null);
   const [category, setCategory] = useState<BusinessCategory | "">("");
   const [phone, setPhone] = useState("");
   const [whatsapp, setWhatsapp] = useState("");
