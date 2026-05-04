@@ -3,11 +3,12 @@ import { useBusiness } from "@/contexts/BusinessContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Loader2, ChevronRight, ChevronLeft, Calendar as CalendarIcon, Phone, User, QrCode, X } from "lucide-react";
+import { Loader2, ChevronRight, ChevronLeft, Calendar as CalendarIcon, Phone, User, QrCode, X, MessageCircle, Bell } from "lucide-react";
 import { toast } from "sonner";
 import { QRCodeSVG } from "qrcode.react";
-import { format, addDays, startOfDay, endOfDay, isSameDay } from "date-fns";
+import { format, addDays, startOfDay, endOfDay, isSameDay, differenceInMinutes } from "date-fns";
 import { ar } from "date-fns/locale";
+import { buildWhatsAppLink } from "@/lib/business";
 
 interface Booking {
   id: string; customer_name: string; customer_phone: string; customer_notes: string | null;
