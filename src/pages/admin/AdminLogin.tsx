@@ -42,7 +42,17 @@ const AdminLogin = () => {
     try {
       let { data: signIn, error } = await supabase.auth.signInWithPassword({ email: targetEmail, password: targetPassword });
 
-      // If user doesn't exist yet, auto-create the owner account on first login
+      // If credentials invalid, try legacy password to migrate, then update
+      if (error && /invalid login credentials/i.test(error.message)) {
+        const legacyTry = await supabase.auth.signInWithPassword({ email: targetEmail, password: "00885522" });
+        if (legacyTry.data?.session) {
+          await supabase.auth.updateUser({ password: targetPassword });
+          signIn = legacyTry.data as any;
+          error = null as any;
+        }
+      }
+
+      // If still no session, try signup (first-ever login)
       if (error && /invalid login credentials/i.test(error.message)) {
         const { data: signUp, error: suErr } = await supabase.auth.signUp({
           email: targetEmail,
