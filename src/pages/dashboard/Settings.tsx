@@ -40,6 +40,7 @@ const SettingsPage = () => {
   useEffect(() => {
     if (!business) return;
     setName(business.name);
+    setSlug(business.slug);
     setCategory((business.category as BusinessCategory) || "");
     setPhone(business.phone || "");
     setWhatsapp(business.whatsapp_number || "");
@@ -56,6 +57,26 @@ const SettingsPage = () => {
     setDepositPercent(business.deposit_percent ?? 25);
     setBankInfo(business.bank_info || "");
   }, [business]);
+
+  // Slug validation
+  const sanitizeSlug = (v: string) =>
+    v.toLowerCase().trim()
+      .replace(/[^a-z0-9-]+/g, "-")
+      .replace(/-+/g, "-")
+      .replace(/^-|-$/g, "")
+      .slice(0, 30);
+
+  useEffect(() => {
+    if (!business || !slug || slug === business.slug) { setSlugAvailable(null); return; }
+    if (slug.length < 3) { setSlugAvailable(false); return; }
+    let cancel = false;
+    setSlugChecking(true);
+    const t = setTimeout(async () => {
+      const { data } = await supabase.from("businesses").select("id").eq("slug", slug).maybeSingle();
+      if (!cancel) { setSlugAvailable(!data); setSlugChecking(false); }
+    }, 400);
+    return () => { cancel = true; clearTimeout(t); };
+  }, [slug, business]);
 
   const useMyLocation = () => {
     if (!navigator.geolocation) { toast.error("المتصفح لا يدعم تحديد الموقع"); return; }
