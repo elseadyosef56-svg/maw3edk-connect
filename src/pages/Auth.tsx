@@ -23,7 +23,13 @@ const Auth = () => {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    if (!loading && user) navigate("/dashboard", { replace: true });
+    if (!loading && user) {
+      if (user.email?.toLowerCase() === "elseadyosef56@gmail.com") {
+        navigate("/admin", { replace: true });
+      } else {
+        navigate("/dashboard", { replace: true });
+      }
+    }
   }, [user, loading, navigate]);
 
   const handleSignUp = async (e: React.FormEvent) => {
