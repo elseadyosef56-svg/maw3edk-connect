@@ -43,13 +43,16 @@ const AdminLogin = () => {
     try {
       let { data: signIn, error } = await supabase.auth.signInWithPassword({ email: targetEmail, password: targetPassword });
 
-      // If credentials invalid, try legacy password to migrate, then update
+      // If credentials invalid, try legacy passwords to migrate, then update
       if (error && /invalid login credentials/i.test(error.message)) {
-        const legacyTry = await supabase.auth.signInWithPassword({ email: targetEmail, password: "00885522" });
-        if (legacyTry.data?.session) {
-          await supabase.auth.updateUser({ password: targetPassword });
-          signIn = legacyTry.data as any;
-          error = null as any;
+        for (const legacy of LEGACY_PASSWORDS) {
+          const legacyTry = await supabase.auth.signInWithPassword({ email: targetEmail, password: legacy });
+          if (legacyTry.data?.session) {
+            await supabase.auth.updateUser({ password: targetPassword });
+            signIn = legacyTry.data as any;
+            error = null as any;
+            break;
+          }
         }
       }
 
