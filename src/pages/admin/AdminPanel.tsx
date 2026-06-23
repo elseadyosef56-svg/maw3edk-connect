@@ -7,11 +7,12 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Loader2, Shield, LogOut, Building2, CreditCard, TrendingUp,
-  Check, X, Calendar, DollarSign, Activity, Wallet, Plus
+  Check, X, Calendar, DollarSign, Activity, Wallet, Plus, Bot
 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
+import { AdminAssistant } from "@/components/AdminAssistant";
 
 const OWNER_EMAIL = "elseadyosef56@gmail.com";
 
