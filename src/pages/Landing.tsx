@@ -60,7 +60,7 @@ const Landing = () => {
         <div className="container relative py-24 md:py-36 text-center animate-fade-in">
           <div className="inline-flex items-center gap-2 glass px-5 py-2 rounded-full text-sm mb-8 shine-overlay">
             <Sparkles className="w-4 h-4 text-primary" />
-            <span className="font-medium">جرّب مجاناً 3 أيام — بدون بطاقة دفع</span>
+            <span className="font-medium">جديد: مستشار ذكاء اصطناعي مدمج لكل منشأة</span>
           </div>
           <h1 className="text-5xl md:text-7xl lg:text-8xl font-display font-extrabold leading-[1.05] mb-6 tracking-tight">
             نظّم مواعيدك… <br />
