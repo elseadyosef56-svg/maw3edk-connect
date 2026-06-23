@@ -2,9 +2,10 @@ import { useEffect, useState } from "react";
 import { useBusiness } from "@/contexts/BusinessContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Link as LinkIcon, Calendar, Users, Scissors, BarChart3, Wallet, AlertTriangle, Tag, Share2, MessageCircle, QrCode } from "lucide-react";
+import { Sparkles, Link as LinkIcon, Calendar, Users, Scissors, BarChart3, Wallet, AlertTriangle, Tag, Share2, MessageCircle, QrCode, Bot, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
+import ReactMarkdown from "react-markdown";
 
 const Overview = () => {
   const { business } = useBusiness();
