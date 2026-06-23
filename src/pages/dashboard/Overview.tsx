@@ -11,6 +11,20 @@ const Overview = () => {
   const { business } = useBusiness();
   const [stats, setStats] = useState({ today: 0, week: 0, revenue: 0, employees: 0 });
   const [walletBalance, setWalletBalance] = useState<number>(0);
+  const [insights, setInsights] = useState<string>("");
+  const [aiLoading, setAiLoading] = useState(false);
+
+  const generateInsights = async () => {
+    setAiLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("ai-clinic-insights", { body: {} });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      setInsights((data as any).insights || "");
+    } catch (e: any) {
+      toast.error(e.message || "تعذّر توليد التحليل");
+    } finally { setAiLoading(false); }
+  };
 
   useEffect(() => {
     if (!business) return;
