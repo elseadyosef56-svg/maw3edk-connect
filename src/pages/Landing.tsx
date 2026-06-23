@@ -1,14 +1,16 @@
 import { Link } from "react-router-dom";
 import { Logo } from "@/components/Logo";
 import { Button } from "@/components/ui/button";
-import { Calendar, Users, BarChart3, QrCode, Sparkles, Check, ArrowLeft, MessageCircle, CreditCard, Shield, Zap } from "lucide-react";
+import { Calendar, Users, BarChart3, QrCode, Sparkles, Check, ArrowLeft, MessageCircle, CreditCard, Shield, Zap, Bot, Star, TrendingUp, Wallet } from "lucide-react";
 
 const features = [
+  { icon: Bot, title: "ذكاء اصطناعي مدمج", desc: "مستشار AI يحلّل أداء منشأتك ويقترح حملات تسويقية أسبوعية." },
   { icon: Calendar, title: "تقويم ذكي بالعربية", desc: "عرض يومي وأسبوعي بألوان مرتبة ومنع تلقائي للتعارض." },
   { icon: MessageCircle, title: "إشعارات واتساب فورية", desc: "كل حجز جديد يصلك مباشرة على واتساب لتأكيده بضغطة." },
   { icon: QrCode, title: "نظام QR احترافي", desc: "كل حجز له رمز فريد لتأكيد حضور الزبون بمسح سريع." },
   { icon: Users, title: "إدارة الفريق", desc: "حدّد ساعات العمل والخدمات لكل موظف أو مختص." },
   { icon: BarChart3, title: "تحليلات وإيرادات", desc: "تابع الإيراد اليومي والشهري وأداء كل خدمة." },
+  { icon: Wallet, title: "محفظة عمولات شفافة", desc: "5% فقط على كل حجز مكتمل، مع تحويل مصرفي سهل." },
   { icon: Shield, title: "حماية البيانات", desc: "تشفير كامل وعزل تام بين المنشآت — أمان مصرفي." },
 ];
 
@@ -58,7 +60,7 @@ const Landing = () => {
         <div className="container relative py-24 md:py-36 text-center animate-fade-in">
           <div className="inline-flex items-center gap-2 glass px-5 py-2 rounded-full text-sm mb-8 shine-overlay">
             <Sparkles className="w-4 h-4 text-primary" />
-            <span className="font-medium">جرّب مجاناً 3 أيام — بدون بطاقة دفع</span>
+            <span className="font-medium">جديد: مستشار ذكاء اصطناعي مدمج لكل منشأة</span>
           </div>
           <h1 className="text-5xl md:text-7xl lg:text-8xl font-display font-extrabold leading-[1.05] mb-6 tracking-tight">
             نظّم مواعيدك… <br />
@@ -86,6 +88,25 @@ const Landing = () => {
           </div>
         </div>
       </section>
+
+      {/* Stats strip */}
+      <section className="container -mt-8 mb-8 relative z-10">
+        <div className="luxe-card rounded-3xl p-6 sm:p-8 grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+          {[
+            { n: "+50", l: "منشأة نشطة", icon: TrendingUp },
+            { n: "+5K", l: "حجز شهرياً", icon: Calendar },
+            { n: "99.9%", l: "نسبة التشغيل", icon: Shield },
+            { n: "24/7", l: "دعم عربي", icon: MessageCircle },
+          ].map((s) => (
+            <div key={s.l}>
+              <s.icon className="w-6 h-6 text-primary mx-auto mb-2" />
+              <p className="text-2xl md:text-3xl font-display font-extrabold text-gradient">{s.n}</p>
+              <p className="text-xs md:text-sm text-muted-foreground mt-1">{s.l}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
 
       {/* Features */}
       <section id="features" className="container py-24">

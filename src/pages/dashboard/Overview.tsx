@@ -2,14 +2,29 @@ import { useEffect, useState } from "react";
 import { useBusiness } from "@/contexts/BusinessContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Link as LinkIcon, Calendar, Users, Scissors, BarChart3, Wallet, AlertTriangle, Tag, Share2, MessageCircle, QrCode } from "lucide-react";
+import { Sparkles, Link as LinkIcon, Calendar, Users, Scissors, BarChart3, Wallet, AlertTriangle, Tag, Share2, MessageCircle, QrCode, Bot, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
+import ReactMarkdown from "react-markdown";
 
 const Overview = () => {
   const { business } = useBusiness();
   const [stats, setStats] = useState({ today: 0, week: 0, revenue: 0, employees: 0 });
   const [walletBalance, setWalletBalance] = useState<number>(0);
+  const [insights, setInsights] = useState<string>("");
+  const [aiLoading, setAiLoading] = useState(false);
+
+  const generateInsights = async () => {
+    setAiLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("ai-clinic-insights", { body: {} });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      setInsights((data as any).insights || "");
+    } catch (e: any) {
+      toast.error(e.message || "تعذّر توليد التحليل");
+    } finally { setAiLoading(false); }
+  };
 
   useEffect(() => {
     if (!business) return;
@@ -148,7 +163,34 @@ const Overview = () => {
         ))}
       </div>
 
+      {/* AI Insights */}
+      <div className="glass rounded-3xl p-5 sm:p-6">
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-fuchsia-500 to-violet-600 grid place-items-center text-white shadow-glow">
+              <Bot className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="font-display font-bold">مستشار الأعمال الذكي</h3>
+              <p className="text-xs text-muted-foreground">تحليل أداء منشأتك واقتراحات تسويقية مخصصة</p>
+            </div>
+          </div>
+          <Button size="sm" onClick={generateInsights} disabled={aiLoading} className="bg-gradient-to-r from-fuchsia-500 to-violet-600 text-white hover:opacity-90">
+            {aiLoading ? <Loader2 className="w-4 h-4 ml-2 animate-spin" /> : <Sparkles className="w-4 h-4 ml-2" />}
+            {insights ? "تحديث التحليل" : "ولّد تحليلاً ذكياً"}
+          </Button>
+        </div>
+        {insights ? (
+          <div className="prose prose-sm max-w-none prose-headings:text-primary prose-strong:text-foreground">
+            <ReactMarkdown>{insights}</ReactMarkdown>
+          </div>
+        ) : (
+          <p className="text-sm text-muted-foreground">اضغط الزر للحصول على تحليل فوري لأداء منشأتك خلال آخر 30 يوماً.</p>
+        )}
+      </div>
+
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+
         {[
           { to: "/dashboard/services", icon: Scissors, title: "أضف خدماتك", desc: "حدد الأسعار والمدة لكل خدمة." },
           { to: "/dashboard/employees", icon: Users, title: "أضف الموظفين", desc: "وزّع الخدمات والساعات." },
