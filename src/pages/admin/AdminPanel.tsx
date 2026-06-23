@@ -206,8 +206,11 @@ const AdminPanel = () => {
           ))}
         </section>
 
-        <Tabs defaultValue="businesses" className="w-full">
+        <Tabs defaultValue="assistant" className="w-full">
           <TabsList className="bg-white/5 border border-white/10 h-11 w-full sm:w-auto flex-wrap">
+            <TabsTrigger value="assistant" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-400 data-[state=active]:to-fuchsia-500 data-[state=active]:text-slate-900 flex-1 sm:flex-none gap-1.5">
+              <Bot className="w-4 h-4" /> المساعد الذكي
+            </TabsTrigger>
             <TabsTrigger value="businesses" className="data-[state=active]:bg-amber-500 data-[state=active]:text-slate-900 flex-1 sm:flex-none">المنشآت ({businesses.length})</TabsTrigger>
             <TabsTrigger value="wallets" className="data-[state=active]:bg-amber-500 data-[state=active]:text-slate-900 flex-1 sm:flex-none">المحافظ</TabsTrigger>
             <TabsTrigger value="payments" className="data-[state=active]:bg-amber-500 data-[state=active]:text-slate-900 flex-1 sm:flex-none">
@@ -215,6 +218,11 @@ const AdminPanel = () => {
             </TabsTrigger>
             <TabsTrigger value="subs" className="data-[state=active]:bg-amber-500 data-[state=active]:text-slate-900 flex-1 sm:flex-none">الاشتراكات</TabsTrigger>
           </TabsList>
+
+          <TabsContent value="assistant" className="mt-4">
+            <AdminAssistant />
+          </TabsContent>
+
 
           {/* Businesses with subscription end-date */}
           <TabsContent value="businesses" className="mt-4 space-y-3">
