@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Plus, Pencil, Trash2, Loader2, Scissors, Clock, Tag } from "lucide-react";
+import { Plus, Pencil, Trash2, Loader2, Scissors, Clock, Tag, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 
 interface Service {
@@ -24,6 +24,22 @@ const Services = () => {
   const [editing, setEditing] = useState<Service | null>(null);
   const [form, setForm] = useState(empty);
   const [saving, setSaving] = useState(false);
+  const [aiLoading, setAiLoading] = useState(false);
+
+  const generateAiDescription = async () => {
+    if (!form.name.trim()) { toast.error("اكتب اسم الخدمة أولاً"); return; }
+    setAiLoading(true);
+    const { data, error } = await supabase.functions.invoke("ai-describe-service", {
+      body: { name: form.name.trim(), category: business?.category || null },
+    });
+    setAiLoading(false);
+    if (error) { toast.error("تعذّر توليد الوصف"); return; }
+    if (data?.error) { toast.error(data.error); return; }
+    if (data?.description) {
+      setForm((f) => ({ ...f, description: data.description }));
+      toast.success("تم توليد الوصف بالذكاء الاصطناعي ✨");
+    }
+  };
 
   const load = async () => {
     if (!business) return;
@@ -116,7 +132,16 @@ const Services = () => {
           <DialogHeader><DialogTitle>{editing ? "تعديل خدمة" : "خدمة جديدة"}</DialogTitle></DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2"><Label>الاسم *</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} maxLength={80} /></div>
-            <div className="space-y-2"><Label>الوصف</Label><Textarea rows={2} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} maxLength={300} /></div>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label>الوصف</Label>
+                <Button type="button" size="sm" variant="ghost" onClick={generateAiDescription} disabled={aiLoading} className="h-7 text-xs text-primary hover:bg-primary/10">
+                  {aiLoading ? <Loader2 className="w-3 h-3 animate-spin ml-1" /> : <Sparkles className="w-3 h-3 ml-1" />}
+                  توليد بالذكاء الاصطناعي
+                </Button>
+              </div>
+              <Textarea rows={3} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} maxLength={300} placeholder="وصف موجز جذاب…" />
+            </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2"><Label>السعر (د.ل)</Label><Input type="number" min="0" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} /></div>
               <div className="space-y-2"><Label>المدة (دقيقة)</Label><Input type="number" min="5" step="5" value={form.duration_minutes} onChange={(e) => setForm({ ...form, duration_minutes: e.target.value })} /></div>
