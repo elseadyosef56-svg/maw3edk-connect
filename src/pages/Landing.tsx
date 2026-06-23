@@ -1,14 +1,16 @@
 import { Link } from "react-router-dom";
 import { Logo } from "@/components/Logo";
 import { Button } from "@/components/ui/button";
-import { Calendar, Users, BarChart3, QrCode, Sparkles, Check, ArrowLeft, MessageCircle, CreditCard, Shield, Zap } from "lucide-react";
+import { Calendar, Users, BarChart3, QrCode, Sparkles, Check, ArrowLeft, MessageCircle, CreditCard, Shield, Zap, Bot, Star, TrendingUp, Wallet } from "lucide-react";
 
 const features = [
+  { icon: Bot, title: "ذكاء اصطناعي مدمج", desc: "مستشار AI يحلّل أداء منشأتك ويقترح حملات تسويقية أسبوعية." },
   { icon: Calendar, title: "تقويم ذكي بالعربية", desc: "عرض يومي وأسبوعي بألوان مرتبة ومنع تلقائي للتعارض." },
   { icon: MessageCircle, title: "إشعارات واتساب فورية", desc: "كل حجز جديد يصلك مباشرة على واتساب لتأكيده بضغطة." },
   { icon: QrCode, title: "نظام QR احترافي", desc: "كل حجز له رمز فريد لتأكيد حضور الزبون بمسح سريع." },
   { icon: Users, title: "إدارة الفريق", desc: "حدّد ساعات العمل والخدمات لكل موظف أو مختص." },
   { icon: BarChart3, title: "تحليلات وإيرادات", desc: "تابع الإيراد اليومي والشهري وأداء كل خدمة." },
+  { icon: Wallet, title: "محفظة عمولات شفافة", desc: "5% فقط على كل حجز مكتمل، مع تحويل مصرفي سهل." },
   { icon: Shield, title: "حماية البيانات", desc: "تشفير كامل وعزل تام بين المنشآت — أمان مصرفي." },
 ];
 
