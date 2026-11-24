@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useBusiness } from "@/contexts/BusinessContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -78,14 +78,44 @@ const SettingsPage = () => {
     return () => { cancel = true; clearTimeout(t); };
   }, [slug, business]);
 
-  const useMyLocation = () => {
-    if (!navigator.geolocation) { toast.error("المتصفح لا يدعم تحديد الموقع"); return; }
-    navigator.geolocation.getCurrentPosition(
-      (pos) => { setLat(pos.coords.latitude); setLng(pos.coords.longitude); setHasLocation(true); toast.success("تم التقاط موقعك"); },
-      (err) => toast.error(err.code === 1 ? "يرجى السماح بالوصول إلى الموقع من إعدادات المتصفح" : "تعذر الحصول على الموقع، حاول مجدداً"),
-      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 },
+  const [locating, setLocating] = useState(false);
+  const [accuracy, setAccuracy] = useState<number | null>(null);
+  const autoLocated = useRef(false);
+
+  const useMyLocation = (silent = false) => {
+    if (!navigator.geolocation) { if (!silent) toast.error("المتصفح لا يدعم تحديد الموقع"); return; }
+    setLocating(true);
+    let best = Infinity;
+    let done = false;
+    const finish = (id: number) => {
+      if (done) return; done = true;
+      navigator.geolocation.clearWatch(id); setLocating(false);
+      if (best < Infinity) toast.success(`تم تحديد موقعك الحقيقي (دقة ±${Math.round(best)} م) — اضغط حفظ`);
+    };
+    const id = navigator.geolocation.watchPosition(
+      (pos) => {
+        if (pos.coords.accuracy < best) {
+          best = pos.coords.accuracy;
+          setLat(pos.coords.latitude); setLng(pos.coords.longitude);
+          setAccuracy(pos.coords.accuracy); setHasLocation(true);
+        }
+        if (best <= 25) finish(id);
+      },
+      (err) => {
+        done = true; navigator.geolocation.clearWatch(id); setLocating(false);
+        if (!silent || err.code !== 1) toast.error(err.code === 1 ? "يرجى السماح بالوصول إلى الموقع من إعدادات المتصفح" : "تعذر الحصول على الموقع، حاول مجدداً");
+      },
+      { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 },
     );
+    setTimeout(() => finish(id), 15000);
   };
+
+  useEffect(() => {
+    if (!business || autoLocated.current) return;
+    autoLocated.current = true;
+    if (business.latitude == null || business.longitude == null) useMyLocation(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [business]);
 
   const upload = async (file: File, kind: "logo" | "cover") => {
     if (!user || !business) return;
@@ -317,8 +347,8 @@ const SettingsPage = () => {
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button type="button" variant="outline" size="sm" onClick={useMyLocation}>
-            <Crosshair className="w-4 h-4 ml-1" /> استخدم موقعي الحالي
+          <Button type="button" variant="outline" size="sm" onClick={() => useMyLocation()} disabled={locating}>
+            {locating ? <Loader2 className="w-4 h-4 ml-1 animate-spin" /> : <Crosshair className="w-4 h-4 ml-1" />} {locating ? "جارٍ تحديد موقعك بدقة..." : "استخدم موقعي الحالي"}
           </Button>
           {hasLocation && (
             <Button type="button" variant="ghost" size="sm" onClick={() => setHasLocation(false)}>
@@ -329,7 +359,7 @@ const SettingsPage = () => {
         <LocationMap lat={lat} lng={lng} interactive onChange={(la, ln) => { setLat(la); setLng(ln); setHasLocation(true); }} height={280} />
         {hasLocation && (
           <p className="text-xs text-muted-foreground" dir="ltr">
-            {lat.toFixed(5)}, {lng.toFixed(5)}
+            {lat.toFixed(6)}, {lng.toFixed(6)}{accuracy != null && ` · ±${Math.round(accuracy)}m`}
           </p>
         )}
       </div>
