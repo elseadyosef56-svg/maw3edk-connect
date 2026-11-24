@@ -565,6 +565,7 @@ export type Database = {
         Returns: boolean
       }
       is_platform_owner_email: { Args: { _user_id: string }; Returns: boolean }
+      is_slug_available: { Args: { _slug: string }; Returns: boolean }
     }
     Enums: {
       app_role: "owner" | "staff" | "admin" | "super_admin"

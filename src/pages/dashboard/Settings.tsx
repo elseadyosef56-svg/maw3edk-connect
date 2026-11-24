@@ -72,8 +72,8 @@ const SettingsPage = () => {
     let cancel = false;
     setSlugChecking(true);
     const t = setTimeout(async () => {
-      const { data } = await supabase.from("businesses").select("id").eq("slug", slug).maybeSingle();
-      if (!cancel) { setSlugAvailable(!data); setSlugChecking(false); }
+      const { data } = await supabase.rpc("is_slug_available", { _slug: slug });
+      if (!cancel) { setSlugAvailable(data === true); setSlugChecking(false); }
     }, 400);
     return () => { cancel = true; clearTimeout(t); };
   }, [slug, business]);
