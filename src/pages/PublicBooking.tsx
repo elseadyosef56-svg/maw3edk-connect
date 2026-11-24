@@ -91,9 +91,8 @@ const PublicBooking = () => {
   useEffect(() => {
     if (!slug) return;
     (async () => {
-      const { data: b } = await supabase.from("businesses")
-        .select("id, name, slug, category, phone, whatsapp_number, address, description, instagram, logo_url, cover_url, working_hours, status, latitude, longitude, deposit_enabled, deposit_percent, bank_info")
-        .eq("slug", slug).maybeSingle();
+      const { data: rows } = await supabase.rpc("get_public_business", { _slug: slug });
+      const b = (rows as any[] | null)?.[0];
       if (!b) { setLoading(false); return; }
       setBiz(b as Biz);
       const [sRes, eRes, pRes] = await Promise.all([

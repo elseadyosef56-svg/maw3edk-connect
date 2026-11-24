@@ -527,7 +527,31 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      business_accepts_proofs: { Args: { _id: string }; Returns: boolean }
       get_employee_id_for_user: { Args: { _user_id: string }; Returns: string }
+      get_public_business: {
+        Args: { _slug: string }
+        Returns: {
+          address: string
+          bank_info: string
+          category: string
+          cover_url: string
+          deposit_enabled: boolean
+          deposit_percent: number
+          description: string
+          id: string
+          instagram: string
+          latitude: number
+          logo_url: string
+          longitude: number
+          name: string
+          phone: string
+          slug: string
+          status: string
+          whatsapp_number: string
+          working_hours: Json
+        }[]
+      }
       get_user_business: { Args: { _user_id: string }; Returns: string }
       has_role: {
         Args: {
