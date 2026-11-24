@@ -436,7 +436,7 @@ const PublicBooking = () => {
                     className={`service-card text-center ${employee?.id === e.id ? "selected" : ""}`}
                   >
                     {e.image_url ? (
-                      <img src={e.image_url} alt={e.name} className="w-14 h-14 sm:w-16 sm:h-16 rounded-full object-cover mx-auto mb-2 border-2 border-primary/20" />
+                      <img loading="lazy" decoding="async" src={e.image_url} alt={e.name} className="w-14 h-14 sm:w-16 sm:h-16 rounded-full object-cover mx-auto mb-2 border-2 border-primary/20" />
                     ) : (
                       <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-gradient-primary text-primary-foreground grid place-items-center mx-auto mb-2 font-bold text-lg shadow-glow">
                         {e.name.charAt(0)}
