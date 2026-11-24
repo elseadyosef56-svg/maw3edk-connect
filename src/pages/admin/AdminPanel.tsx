@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Loader2, Shield, LogOut, Building2, CreditCard, TrendingUp,
@@ -31,6 +32,7 @@ const AdminPanel = () => {
   const [wallets, setWallets] = useState<WalletRow[]>([]);
   const [bookingsCount, setBookingsCount] = useState(0);
   const [todayBookings, setTodayBookings] = useState(0);
+  const [tab, setTab] = useState("assistant");
   const [topupAmounts, setTopupAmounts] = useState<Record<string, string>>({});
 
   // Strict gate: must be the owner email AND have super_admin role
@@ -192,7 +194,7 @@ const AdminPanel = () => {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
+      <main className="overflow-x-hidden max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
         {/* Stats */}
         <section className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-4">
           {stats.map((s) => (
@@ -201,13 +203,23 @@ const AdminPanel = () => {
                 <s.icon className="w-5 h-5 text-white" />
               </div>
               <p className="text-xs text-white/60 mb-1">{s.label}</p>
-              <p className="text-lg sm:text-xl font-display font-extrabold">{s.value}</p>
+              <p className="text-base sm:text-xl font-display font-extrabold truncate">{s.value}</p>
             </div>
           ))}
         </section>
 
-        <Tabs defaultValue="assistant" className="w-full">
-          <TabsList className="bg-white/5 border border-white/10 h-11 w-full sm:w-auto flex-wrap">
+        <Tabs value={tab} onValueChange={setTab} className="w-full min-w-0">
+          <Select value={tab} onValueChange={setTab}>
+            <SelectTrigger className="sm:hidden h-12 bg-white/5 border-white/10 text-white font-bold"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="assistant">المساعد الذكي</SelectItem>
+              <SelectItem value="businesses">المنشآت ({businesses.length})</SelectItem>
+              <SelectItem value="wallets">المحافظ</SelectItem>
+              <SelectItem value="payments">طلبات الدفع{pendingCount ? ` (${pendingCount})` : ""}</SelectItem>
+              <SelectItem value="subs">الاشتراكات</SelectItem>
+            </SelectContent>
+          </Select>
+          <TabsList className="hidden sm:inline-flex bg-white/5 border border-white/10 h-11 max-w-full overflow-x-auto">
             <TabsTrigger value="assistant" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-400 data-[state=active]:to-fuchsia-500 data-[state=active]:text-slate-900 flex-1 sm:flex-none gap-1.5">
               <Bot className="w-4 h-4" /> المساعد الذكي
             </TabsTrigger>
@@ -237,7 +249,7 @@ const AdminPanel = () => {
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 flex-wrap mb-1.5">
-                        <h3 className="font-bold text-base">{b.name}</h3>
+                        <h3 className="font-bold text-base break-words min-w-0">{b.name}</h3>
                         <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
                           b.status === "active" ? "bg-emerald-500/20 text-emerald-300" :
                           b.status === "trial" ? "bg-blue-500/20 text-blue-300" :
@@ -261,7 +273,7 @@ const AdminPanel = () => {
                         <span>الاشتراك حتى: <b className="text-amber-300">{format(endDate, "d MMM yyyy", { locale: ar })}</b></span>
                       </div>
                     </div>
-                    <div className="flex gap-2 shrink-0">
+                    <div className="flex gap-2 w-full sm:w-auto [&>*]:flex-1 sm:[&>*]:flex-none">
                       <Button size="sm" variant="outline" asChild className="bg-transparent border-white/20 text-white hover:bg-white/10">
                         <a href={`/${b.slug}`} target="_blank" rel="noopener">عرض</a>
                       </Button>
@@ -291,12 +303,12 @@ const AdminPanel = () => {
                         الرصيد: {bal.toLocaleString()} د.ل
                       </p>
                     </div>
-                    <div className="flex gap-2 items-center">
+                    <div className="flex gap-2 items-center w-full sm:w-auto">
                       <Input
                         type="number" min={1} placeholder="مبلغ"
                         value={topupAmounts[b.id] || ""}
                         onChange={(e) => setTopupAmounts(p => ({ ...p, [b.id]: e.target.value }))}
-                        className="h-9 w-28 bg-white/5 border-white/10 text-white"
+                        className="h-10 flex-1 sm:w-28 bg-white/5 border-white/10 text-white"
                       />
                       <Button size="sm" onClick={() => handleTopup(b.id)} className="bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold">
                         <Plus className="w-4 h-4 ml-1" /> شحن
@@ -337,7 +349,7 @@ const AdminPanel = () => {
                       {p.reference && <p className="text-xs text-white/50 mt-1.5" dir="ltr">مرجع: {p.reference}</p>}
                     </div>
                     {p.status === "pending" && (
-                      <div className="flex gap-2 shrink-0">
+                      <div className="flex gap-2 w-full sm:w-auto [&>*]:flex-1">
                         <Button size="sm" onClick={() => handleApprove(p)} className="bg-emerald-500 hover:bg-emerald-600 text-white">
                           <Check className="w-4 h-4 ml-1" /> موافقة
                         </Button>

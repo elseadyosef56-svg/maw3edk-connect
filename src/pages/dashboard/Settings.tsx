@@ -82,7 +82,8 @@ const SettingsPage = () => {
     if (!navigator.geolocation) { toast.error("المتصفح لا يدعم تحديد الموقع"); return; }
     navigator.geolocation.getCurrentPosition(
       (pos) => { setLat(pos.coords.latitude); setLng(pos.coords.longitude); setHasLocation(true); toast.success("تم التقاط موقعك"); },
-      () => toast.error("تعذر الحصول على الموقع"),
+      (err) => toast.error(err.code === 1 ? "يرجى السماح بالوصول إلى الموقع من إعدادات المتصفح" : "تعذر الحصول على الموقع، حاول مجدداً"),
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 },
     );
   };
 
