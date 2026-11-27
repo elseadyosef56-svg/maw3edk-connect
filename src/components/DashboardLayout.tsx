@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Calendar, LayoutDashboard, Scissors, Users, Settings, CreditCard, LogOut, Loader2, Menu, X, Tag } from "lucide-react";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
+import { BookingNotifications } from "./BookingNotifications";
 
 const items = [
   { to: "/dashboard", label: "نظرة عامة", icon: LayoutDashboard, end: true },
@@ -60,12 +61,15 @@ export const DashboardLayout = () => {
   return (
     <div className="min-h-screen flex">
       {/* Mobile top bar */}
-      <header className="lg:hidden fixed top-0 inset-x-0 z-40 glass-subtle border-b border-border/50">
+      <header className="fixed top-0 inset-x-0 lg:right-64 z-40 glass-subtle border-b border-border/50">
         <div className="flex items-center justify-between h-14 px-4">
           <Logo />
-          <Button variant="ghost" size="icon" onClick={() => setOpen(!open)}>
+          <div className="flex items-center gap-1">
+          {business && <BookingNotifications key={business.id} businessId={business.id} />}
+          <Button variant="ghost" size="icon" className="lg:hidden" aria-label="قائمة التنقل" onClick={() => setOpen(!open)}>
             {open ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </Button>
+          </div>
         </div>
       </header>
 
@@ -97,7 +101,7 @@ export const DashboardLayout = () => {
         </div>
       )}
 
-      <main className="flex-1 min-w-0 pt-14 lg:pt-0">
+      <main className="flex-1 min-w-0 pt-14">
         <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 py-6 lg:py-8">
           <Outlet />
         </div>

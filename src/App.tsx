@@ -9,6 +9,7 @@ import { BusinessProvider } from "@/contexts/BusinessContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import Landing from "./pages/Landing";
+import { SupportWidget } from "@/components/SupportWidget";
 const Auth = lazy(() => import("./pages/Auth"));
 const Onboarding = lazy(() => import("./pages/Onboarding"));
 const Overview = lazy(() => import("./pages/dashboard/Overview"));
@@ -55,6 +56,7 @@ const App = () => (
               <Route path="*" element={<NotFound />} />
             </Routes>
             </Suspense>
+            <SupportWidget />
           </BusinessProvider>
         </AuthProvider>
       </BrowserRouter>

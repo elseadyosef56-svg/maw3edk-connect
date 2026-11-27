@@ -28,7 +28,7 @@ interface Biz {
   latitude: number | null; longitude: number | null;
   deposit_enabled: boolean; deposit_percent: number; bank_info: string | null;
 }
-interface Service { id: string; name: string; description: string | null; price: number; duration_minutes: number; }
+interface Service { id: string; name: string; description: string | null; price: number; duration_minutes: number; image_url: string | null; }
 interface Employee { id: string; name: string; service_ids: string[]; image_url: string | null; }
 
 interface Promo { id: string; title: string; description: string | null; discount_percent: number; ends_at: string; service_id: string | null; }
@@ -399,11 +399,12 @@ const PublicBooking = () => {
             ) : (
               <div className="grid sm:grid-cols-2 gap-3">
                 {services.map(s => (
-                  <button
+                  <Button variant="outline"
                     key={s.id}
                     onClick={() => { setService(s); setEmployee(null); setSlot(null); setStep(2); }}
-                    className={`service-card text-right ${service?.id === s.id ? "selected" : ""}`}
+                    className={`service-card text-right h-auto block w-full whitespace-normal ${service?.id === s.id ? "selected" : ""}`}
                   >
+                    {s.image_url && <img src={s.image_url} alt={s.name} loading="lazy" decoding="async" className="w-full aspect-[4/3] object-cover rounded-lg mb-3" />}
                     <div className="flex items-start justify-between gap-2 mb-2">
                       <h3 className="font-bold text-sm sm:text-base flex-1 min-w-0">{s.name}</h3>
                       <span className="shrink-0 text-primary font-display font-extrabold text-base sm:text-lg">{s.price}<span className="text-xs font-normal mr-1">د.ل</span></span>
@@ -412,7 +413,7 @@ const PublicBooking = () => {
                     <p className="text-xs text-muted-foreground flex items-center gap-1">
                       <Clock className="w-3 h-3" />{s.duration_minutes} دقيقة
                     </p>
-                  </button>
+                  </Button>
                 ))}
               </div>
             )}

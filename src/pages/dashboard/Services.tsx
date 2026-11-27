@@ -8,16 +8,26 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Plus, Pencil, Trash2, Loader2, Scissors, Clock, Tag, Sparkles } from "lucide-react";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
+import { ImagePlus, X } from "lucide-react";
 
 interface Service {
   id: string; name: string; description: string | null;
-  price: number; duration_minutes: number; is_active: boolean;
+  price: number; duration_minutes: number; is_active: boolean; image_url: string | null;
 }
 
-const empty = { name: "", description: "", price: "0", duration_minutes: "30" };
+const empty = { name: "", description: "", price: "0", duration_minutes: "30", image_url: "" };
 
 const Services = () => {
   const { business } = useBusiness();
+  const { user } = useAuth();
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [preview, setPreview] = useState("");
+  useEffect(() => {
+    if (!imageFile) { setPreview(""); return; }
+    const url = URL.createObjectURL(imageFile); setPreview(url);
+    return () => URL.revokeObjectURL(url);
+  }, [imageFile]);
   const [items, setItems] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
@@ -51,32 +61,51 @@ const Services = () => {
 
   useEffect(() => { load(); }, [business]);
 
-  const openNew = () => { setEditing(null); setForm(empty); setOpen(true); };
+  const openNew = () => { setEditing(null); setForm(empty); setImageFile(null); setOpen(true); };
   const openEdit = (s: Service) => {
     setEditing(s);
-    setForm({ name: s.name, description: s.description || "", price: String(s.price), duration_minutes: String(s.duration_minutes) });
+    setImageFile(null);
+    setForm({ name: s.name, description: s.description || "", price: String(s.price), duration_minutes: String(s.duration_minutes), image_url: s.image_url || "" });
     setOpen(true);
   };
 
   const save = async () => {
-    if (!business) return;
+    if (!business || !user) return;
     if (!form.name.trim()) { toast.error("الاسم مطلوب"); return; }
     setSaving(true);
+    let imageUrl = form.image_url || null;
+    let uploadedPath: string | null = null;
+    try {
+    if (imageFile) {
+      const extensions: Record<string, string> = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp" };
+      const extension = extensions[imageFile.type];
+      if (!extension || imageFile.size > 5 * 1024 * 1024) throw new Error("اختر صورة JPG أو PNG أو WebP لا تتجاوز 5 ميجابايت");
+      const bitmap = await createImageBitmap(imageFile); bitmap.close();
+      const path = `${user.id}/services/${business.id}/${crypto.randomUUID()}.${extension}`;
+      const { error } = await supabase.storage.from("service-images").upload(path, imageFile, { contentType: imageFile.type });
+      if (error) throw error;
+      uploadedPath = path;
+      imageUrl = supabase.storage.from("service-images").getPublicUrl(path).data.publicUrl;
+    }
     const payload = {
       business_id: business.id,
       name: form.name.trim(),
       description: form.description.trim() || null,
       price: Number(form.price) || 0,
       duration_minutes: Number(form.duration_minutes) || 30,
+      image_url: imageUrl,
     };
     const res = editing
       ? await supabase.from("services").update(payload).eq("id", editing.id)
       : await supabase.from("services").insert(payload);
-    setSaving(false);
-    if (res.error) { toast.error(res.error.message); return; }
+    if (res.error) throw res.error;
     toast.success(editing ? "تم التحديث" : "تمت الإضافة");
     setOpen(false);
     load();
+    } catch (error) {
+      if (uploadedPath) await supabase.storage.from("service-images").remove([uploadedPath]);
+      toast.error(error instanceof Error ? error.message : "تعذر حفظ الخدمة، حاول مجدداً");
+    } finally { setSaving(false); }
   };
 
   const remove = async (id: string) => {
@@ -109,13 +138,16 @@ const Services = () => {
       ) : (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {items.filter(s => s.is_active).map((s) => (
-            <div key={s.id} className="glass rounded-2xl p-5 group">
+            <div key={s.id} className="bg-card border rounded-lg overflow-hidden group">
+              {s.image_url && <img src={s.image_url} alt={s.name} loading="lazy" decoding="async" className="w-full aspect-[4/3] object-cover" />}
+              <div className="p-5">
               <div className="flex items-start justify-between mb-3">
                 <h3 className="font-display font-bold text-lg">{s.name}</h3>
-                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => openEdit(s)}><Pencil className="w-3.5 h-3.5" /></Button>
-                  <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => remove(s.id)}><Trash2 className="w-3.5 h-3.5" /></Button>
+                <div className="flex gap-1 shrink-0">
+                  <Button size="icon" variant="ghost" aria-label={`تعديل ${s.name}`} title="تعديل الخدمة" className="h-9 w-9" onClick={() => openEdit(s)}><Pencil className="w-3.5 h-3.5" /></Button>
+                  <Button size="icon" variant="ghost" aria-label={`حذف ${s.name}`} title="حذف الخدمة" className="h-9 w-9 text-destructive" onClick={() => remove(s.id)}><Trash2 className="w-3.5 h-3.5" /></Button>
                 </div>
+              </div>
               </div>
               {s.description && <p className="text-sm text-muted-foreground mb-3 line-clamp-2">{s.description}</p>}
               <div className="flex items-center gap-4 text-sm">
@@ -128,9 +160,14 @@ const Services = () => {
       )}
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="glass">
+        <DialogContent className="bg-card max-h-[90dvh] overflow-y-auto">
           <DialogHeader><DialogTitle>{editing ? "تعديل خدمة" : "خدمة جديدة"}</DialogTitle></DialogHeader>
           <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="service-photo">صورة الخدمة أو المنتج</Label>
+              {(preview || form.image_url) && <div className="relative"><img src={preview || form.image_url} alt="معاينة صورة الخدمة" className="w-full max-h-48 object-contain rounded-lg bg-muted" /><Button type="button" size="icon" variant="secondary" aria-label="إزالة الصورة" title="إزالة الصورة" className="absolute top-2 left-2" onClick={() => { setImageFile(null); setForm(f => ({ ...f, image_url: "" })); }}><X className="w-4 h-4" /></Button></div>}
+              <div className="flex items-center gap-2 border border-dashed rounded-lg p-3"><ImagePlus className="w-5 h-5 text-primary shrink-0" /><Input id="service-photo" type="file" accept="image/jpeg,image/png,image/webp" disabled={saving} className="border-0 p-0 h-auto min-w-0" onChange={e => { const file = e.target.files?.[0]; if (!file) return; if (!["image/jpeg", "image/png", "image/webp"].includes(file.type) || file.size > 5 * 1024 * 1024) { toast.error("اختر صورة JPG أو PNG أو WebP لا تتجاوز 5 ميجابايت"); e.target.value = ""; return; } setImageFile(file); }} /></div>
+            </div>
             <div className="space-y-2"><Label>الاسم *</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} maxLength={80} /></div>
             <div className="space-y-2">
               <div className="flex items-center justify-between">

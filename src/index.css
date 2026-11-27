@@ -32,6 +32,12 @@
 
     --destructive: 0 75% 55%;
     --destructive-foreground: 0 0% 100%;
+    --libya-red: 355 76% 42%;
+    --libya-black: 0 0% 8%;
+    --libya-green: 151 70% 30%;
+    --libya-white: 0 0% 100%;
+    --hero-ink: 0 0% 100%;
+    --hero-shade: 160 30% 8%;
 
     --border: 220 20% 90%;
     --input: 220 20% 92%;
@@ -116,9 +122,8 @@
   }
   h1, h2, h3, h4 {
     font-family: 'Cairo', 'Tajawal', sans-serif;
-    @apply tracking-tight;
     line-height: 1.35;
-    letter-spacing: -0.01em;
+    letter-spacing: 0;
   }
   /* Mobile-tuned heading sizes to prevent overflow & overlap */
   h1 { font-size: clamp(1.5rem, 4.5vw, 2.5rem); }
@@ -141,6 +146,16 @@
     input, textarea, select { font-size: 14px; }
   }
 }
+
+.landing-page { background: hsl(var(--background)); }
+.landing-page h1, .landing-page h2, .landing-page h3 { letter-spacing: 0; }
+.libyan-hero { color: hsl(var(--hero-ink)); }
+.libyan-hero-shade { background: linear-gradient(to left, hsl(var(--hero-shade) / 0.94), hsl(var(--hero-shade) / 0.78) 38%, hsl(var(--hero-shade) / 0.12) 80%); }
+.hero-secondary { background: hsl(var(--hero-ink) / 0.08); border-color: hsl(var(--hero-ink) / 0.45); color: hsl(var(--hero-ink)); }
+.hero-secondary:hover { background: hsl(var(--hero-ink) / 0.18); color: hsl(var(--hero-ink)); }
+.libyan-flag { width: 30px; height: 20px; flex-shrink: 0; border-radius: 2px; background: linear-gradient(hsl(var(--libya-red)) 25%, hsl(var(--libya-black)) 25% 75%, hsl(var(--libya-green)) 75%); position: relative; }
+.libyan-flag::after { content: '☪'; color: hsl(var(--libya-white)); position: absolute; inset: 0; display: grid; place-items: center; font-size: 12px; line-height: 1; }
+@media (max-width: 640px) { .libyan-hero-shade { background: hsl(var(--hero-shade) / 0.78); } .libyan-hero > img { object-position: 38% center; } }
 
 @layer components {
   .glass {
