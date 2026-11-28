@@ -48,7 +48,7 @@ export const defaultHours: WorkingHours = dayKeys.reduce((acc, k) => {
 // ============ Business Categories with full localization ============
 export type BusinessCategory =
   | "clinic" | "beauty_center" | "barbershop" | "salon"
-  | "spa" | "company" | "resort" | "service";
+  | "spa" | "company" | "resort" | "home_bakery" | "service";
 
 export interface CategoryConfig {
   label: string;
@@ -113,6 +113,13 @@ export const categories: Record<BusinessCategory, CategoryConfig> = {
     staffPageTitle: "إدارة الموظفين", staffAddBtn: "إضافة موظف",
     servicesLabel: "الخدمات والباقات", servicesAddBtn: "إضافة خدمة",
     customerLabel: "الضيف", bookingLabel: "حجز",
+  },
+  home_bakery: {
+    label: "معمل حلويات وكيك منزلي", emoji: "🎂",
+    staffSingular: "شيف", staffSingularF: "صانعة كيك", staffPlural: "الشيفات وصانعات الكيك",
+    staffPageTitle: "فريق الحلويات", staffAddBtn: "إضافة شيف / صانعة كيك",
+    servicesLabel: "الحلويات والكيكات", servicesAddBtn: "إضافة صنف / كيكة",
+    customerLabel: "صاحب الطلبية", bookingLabel: "موعد استلام الطلبية",
   },
   service: {
     label: "خدمات أخرى", emoji: "✨",

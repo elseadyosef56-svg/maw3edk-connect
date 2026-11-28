@@ -527,6 +527,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      approve_wallet_topup: { Args: { _request_id: string }; Returns: number }
       business_accepts_proofs: { Args: { _id: string }; Returns: boolean }
       get_employee_id_for_user: { Args: { _user_id: string }; Returns: string }
       get_public_business: {
